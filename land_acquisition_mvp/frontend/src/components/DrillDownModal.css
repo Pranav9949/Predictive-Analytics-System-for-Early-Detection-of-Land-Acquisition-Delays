@@ -1,0 +1,539 @@
+/* ============================================================
+   DrillDownModal.css — Modal & What-If Styles
+   ============================================================ */
+
+/* ── Overlay ─────────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl);
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ── Container ───────────────────────────────────────────────── */
+.modal-container {
+  background: linear-gradient(145deg, #0f172a, #1e1b4b20, #0f172a);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-xl);
+  width: 100%;
+  max-width: 750px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6), var(--shadow-glow);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ── Header ──────────────────────────────────────────────────── */
+.modal-header {
+  padding: var(--space-xl);
+  border-bottom: 1px solid var(--border-glass);
+}
+
+.modal-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.modal-header h2 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.modal-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.modal-close {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-sm);
+  padding: 6px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.modal-close:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: var(--risk-critical);
+}
+
+/* ── Body ────────────────────────────────────────────────────── */
+.modal-body {
+  padding: var(--space-xl);
+}
+
+.modal-loading,
+.modal-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  gap: var(--space-md);
+}
+
+.modal-loading p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.modal-error p {
+  color: #fca5a5;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.error-hint {
+  color: var(--text-muted) !important;
+  font-size: 0.8rem !important;
+}
+
+/* ── Risk Gauge ──────────────────────────────────────────────── */
+.risk-gauge-section {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xl);
+  margin-bottom: var(--space-xl);
+}
+
+.risk-gauge {
+  flex-shrink: 0;
+}
+
+.risk-gauge-fill {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+}
+
+.risk-gauge-inner {
+  width: 96px;
+  height: 96px;
+  background: var(--bg-secondary);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.gauge-value {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.gauge-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
+.recommendation-box {
+  flex: 1;
+  padding: var(--space-md) var(--space-lg);
+  background: rgba(99, 102, 241, 0.06);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  border-radius: var(--radius-md);
+}
+
+.recommendation-box h4 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent-indigo);
+  margin-bottom: var(--space-sm);
+}
+
+.recommendation-box p {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* ── Sections ────────────────────────────────────────────────── */
+.section {
+  margin-bottom: var(--space-xl);
+}
+
+.section-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--border-glass);
+}
+
+/* ── Stage Bars ──────────────────────────────────────────────── */
+.stage-bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.stage-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.stage-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 180px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.stage-icon {
+  font-size: 1.1rem;
+}
+
+.stage-bar-track {
+  flex: 1;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.stage-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.stage-value {
+  min-width: 45px;
+  text-align: right;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+/* ── SHAP Drivers ────────────────────────────────────────────── */
+.shap-drivers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.shap-driver-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
+}
+
+.shap-driver-card:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.shap-rank {
+  width: 32px;
+  height: 32px;
+  background: var(--gradient-accent);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+}
+
+.shap-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.shap-feature {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.shap-direction {
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+
+.shap-direction.risk-up { color: #ef4444; }
+.shap-direction.risk-down { color: #10b981; }
+
+.shap-value-bar {
+  width: 80px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.shap-value-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.shap-value-num {
+  min-width: 55px;
+  text-align: right;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+/* ── What-If Section ─────────────────────────────────────────── */
+.whatif-section {
+  background: rgba(99, 102, 241, 0.03);
+  border: 1px solid rgba(99, 102, 241, 0.1);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+}
+
+.whatif-desc {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-bottom: var(--space-md);
+}
+
+/* Feature chips */
+.whatif-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+
+.whatif-chip {
+  padding: 5px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-glass);
+  border-radius: 9999px;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-family: inherit;
+}
+
+.whatif-chip:hover {
+  background: rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.3);
+  color: var(--text-primary);
+}
+
+.whatif-chip.active {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: var(--accent-indigo);
+  color: var(--accent-indigo);
+  font-weight: 600;
+}
+
+/* Slider */
+.whatif-slider-section {
+  margin-bottom: var(--space-lg);
+}
+
+.slider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+}
+
+.slider-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.slider-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent-indigo);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.whatif-slider {
+  width: 100%;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+}
+
+.whatif-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: var(--gradient-accent);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.5);
+  transition: transform 0.15s ease;
+}
+
+.whatif-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.whatif-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: var(--gradient-accent);
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.5);
+}
+
+.slider-range {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+/* What-If Loading */
+.whatif-loading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.loader.small {
+  width: 20px;
+  height: 20px;
+  border-width: 2px;
+}
+
+/* What-If Result */
+.whatif-result {
+  animation: fadeInUp 0.3s ease;
+}
+
+.whatif-comparison {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.whatif-box {
+  flex: 1;
+  padding: var(--space-md);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.whatif-arrow {
+  font-size: 1.5rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.whatif-box-label {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.whatif-box-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.whatif-box.reduction.positive .whatif-box-value {
+  color: var(--risk-low) !important;
+}
+
+.whatif-box.reduction.negative .whatif-box-value {
+  color: var(--risk-critical) !important;
+}
+
+/* ── Responsive ──────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .modal-container {
+    max-height: 95vh;
+    border-radius: var(--radius-lg);
+  }
+
+  .modal-overlay {
+    padding: var(--space-sm);
+  }
+
+  .risk-gauge-section {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .whatif-comparison {
+    flex-wrap: wrap;
+  }
+
+  .whatif-arrow {
+    display: none;
+  }
+
+  .stage-label {
+    min-width: 120px;
+  }
+}

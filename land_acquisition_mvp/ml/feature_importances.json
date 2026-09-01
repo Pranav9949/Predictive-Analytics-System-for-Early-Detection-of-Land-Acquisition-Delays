@@ -1,0 +1,22 @@
+{
+  "compensation_disbursed_pct": 0.3525015413761139,
+  "legal_cases_count": 0.29449301958084106,
+  "ownership_disputes": 0.03511027991771698,
+  "doc_deficiency_score": 0.03499547019600868,
+  "rnp_progress_pct": 0.03319888561964035,
+  "approval_days_pending": 0.030629808083176613,
+  "possession_pct": 0.02611014060676098,
+  "district_Aurangabad": 0.020535046234726906,
+  "project_type_Metro": 0.01951277069747448,
+  "district_Nashik": 0.01791469007730484,
+  "historical_district_delay_avg": 0.01596728339791298,
+  "land_acquired_pct": 0.01582968607544899,
+  "affected_families": 0.014795713126659393,
+  "project_type_Highway": 0.013547820039093494,
+  "total_acres": 0.013446669094264507,
+  "district_Nagpur": 0.01319897174835205,
+  "district_Mumbai": 0.012818795628845692,
+  "district_Pune": 0.012752740643918514,
+  "project_type_Irrigation": 0.011527319438755512,
+  "project_type_Railway": 0.011113343760371208
+}

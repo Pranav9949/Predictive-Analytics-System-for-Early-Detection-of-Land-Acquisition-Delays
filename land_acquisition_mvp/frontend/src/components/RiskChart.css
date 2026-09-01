@@ -1,0 +1,30 @@
+/* ============================================================
+   RiskChart.css — Chart Styles
+   ============================================================ */
+
+.risk-chart-wrapper {
+  padding: var(--space-md) var(--space-md) 0;
+  flex: 1;
+  min-height: 0;
+}
+
+.chart-tooltip {
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-sm);
+  padding: var(--space-sm) var(--space-md);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-md);
+}
+
+.tooltip-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.tooltip-value {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}

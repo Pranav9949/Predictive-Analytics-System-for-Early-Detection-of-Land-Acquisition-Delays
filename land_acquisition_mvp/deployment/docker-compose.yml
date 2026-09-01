@@ -1,0 +1,69 @@
+# ============================================================
+# docker-compose.yml — Full Stack Deployment
+# ============================================================
+# Services: PostGIS, FastAPI Backend, React Frontend (Nginx)
+# ============================================================
+
+version: "3.8"
+
+services:
+  # ── PostgreSQL + PostGIS ─────────────────────────────────
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: land_acq_db
+    environment:
+      POSTGRES_DB: land_acquisition
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../database/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - land_acq_net
+
+  # ── FastAPI Backend ──────────────────────────────────────
+  backend:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile.backend
+    container_name: land_acq_backend
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/land_acquisition
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - land_acq_net
+    restart: unless-stopped
+
+  # ── React Frontend (Nginx) ──────────────────────────────
+  frontend:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile.frontend
+      args:
+        VITE_API_URL: http://localhost:8000
+    container_name: land_acq_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - land_acq_net
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+
+networks:
+  land_acq_net:
+    driver: bridge

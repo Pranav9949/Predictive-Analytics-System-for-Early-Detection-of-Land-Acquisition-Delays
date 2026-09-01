@@ -1,0 +1,105 @@
+/* ============================================================
+   KPICards.css — KPI Card Styles
+   ============================================================ */
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+.kpi-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  padding: var(--space-lg) var(--space-xl);
+  background: var(--gradient-card);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+  animation: fadeInUp 0.5s ease forwards;
+  opacity: 0;
+  transition: transform var(--transition-normal), border-color var(--transition-normal);
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Gradient accents */
+.kpi-card.kpi-blue { border-left: 3px solid var(--accent-indigo); }
+.kpi-card.kpi-blue:hover { border-color: var(--accent-indigo); }
+.kpi-card.kpi-blue .kpi-icon { color: var(--accent-indigo); background: rgba(99, 102, 241, 0.1); }
+
+.kpi-card.kpi-red { border-left: 3px solid var(--risk-critical); }
+.kpi-card.kpi-red:hover { border-color: var(--risk-critical); }
+.kpi-card.kpi-red .kpi-icon { color: var(--risk-critical); background: rgba(239, 68, 68, 0.1); }
+
+.kpi-card.kpi-amber { border-left: 3px solid var(--risk-moderate); }
+.kpi-card.kpi-amber:hover { border-color: var(--risk-moderate); }
+.kpi-card.kpi-amber .kpi-icon { color: var(--risk-moderate); background: rgba(245, 158, 11, 0.1); }
+
+/* Glow effect */
+.kpi-glow {
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  opacity: 0.04;
+  pointer-events: none;
+}
+
+.kpi-blue .kpi-glow { background: var(--accent-indigo); }
+.kpi-red .kpi-glow { background: var(--risk-critical); }
+.kpi-amber .kpi-glow { background: var(--risk-moderate); }
+
+.kpi-icon-wrapper {
+  flex-shrink: 0;
+}
+
+.kpi-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kpi-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.kpi-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.kpi-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.kpi-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+@media (max-width: 768px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}

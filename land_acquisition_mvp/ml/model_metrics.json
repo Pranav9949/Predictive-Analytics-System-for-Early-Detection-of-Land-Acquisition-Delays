@@ -1,0 +1,10 @@
+{
+  "timestamp": "2026-09-01T21:21:14.894916",
+  "accuracy": 0.962,
+  "roc_auc": 0.9925,
+  "f1_score": 0.9497,
+  "train_size": 4000,
+  "test_size": 1000,
+  "n_features": 20,
+  "retraining_trigger": "initial_training"
+}

@@ -1,0 +1,38 @@
+# ============================================================
+# Dockerfile.backend — FastAPI + ML Model Server
+# ============================================================
+# Multi-stage is not needed here; single stage for simplicity.
+# ============================================================
+
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies (for psycopg2 and scipy/numpy)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy and install Python requirements
+COPY backend/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy ML code & data
+COPY ml/ /app/ml/
+
+# Generate data and train model at build time
+RUN cd /app/ml && python generate_data.py && python train_model.py
+
+# Copy backend application
+COPY backend/ /app/backend/
+
+# Expose port
+EXPOSE 8000
+
+# Set Python path so backend can import from ml/
+ENV PYTHONPATH="/app"
+
+# Run FastAPI with uvicorn
+CMD ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
