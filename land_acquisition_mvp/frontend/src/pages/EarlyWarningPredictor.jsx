@@ -111,6 +111,33 @@ export default function EarlyWarningPredictor() {
   const [error, setError] = useState(null)
   const [prediction, setPrediction] = useState(null)
 
+  // 3-State ML Model Health: null = checking, true = loaded, false = unavailable
+  const [modelLoaded, setModelLoaded] = useState(null)
+
+  // ── ML Service Health Check ─────────────────────────────
+  const checkMLHealth = async () => {
+    setModelLoaded(null)
+    try {
+      const API_URL = import.meta.env.VITE_API_URL
+      const targetUrl = API_URL ? `${API_URL.replace(/\/+$/, '')}/health` : '/health'
+      const response = await api.get(targetUrl)
+
+      // Direct access to response.data.model_loaded per backend schema
+      if (response && response.data && response.data.model_loaded === true) {
+        setModelLoaded(true)
+      } else {
+        setModelLoaded(false)
+      }
+    } catch (err) {
+      console.error('ML service health check failed:', err)
+      setModelLoaded(false)
+    }
+  }
+
+  useEffect(() => {
+    checkMLHealth()
+  }, [])
+
   // Project Search State
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
@@ -322,13 +349,18 @@ export default function EarlyWarningPredictor() {
 
       const res = await api.post('/predict', payload)
       setPrediction(res.data)
+      setModelLoaded(true)
 
       // Initialize What-If slider with improved compensation
       setWhatifFeature('compensation_disbursed_pct')
       setWhatifValue(Math.min(100, Math.round(Math.abs(parseFloat(formData.compensation_disbursed_pct) || 0) + 35)))
       setWhatifResult(null)
     } catch (err) {
-      setError(err.response?.data?.detail || err.message || 'Prediction request failed')
+      const detail = err.response?.data?.detail
+      if (detail === 'ML model artifacts not loaded.') {
+        setModelLoaded(false)
+      }
+      setError(detail || err.message || 'Prediction request failed')
     } finally {
       setLoading(false)
     }
@@ -447,14 +479,46 @@ export default function EarlyWarningPredictor() {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-xl px-3.5 py-2">
-            <ShieldAlert size={16} className="text-blue-600" />
-            <span className="text-xs font-bold text-blue-900">
-              Active Persona: {roleInfo.officerName} ({currentRole})
-            </span>
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* 3-State ML Model Health Indicator */}
+            {modelLoaded === null && (
+              <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-gray-500 shadow-xs">
+                <RefreshCw size={13} className="animate-spin text-blue-600" />
+                <span>Checking ML service...</span>
+              </div>
+            )}
+            {modelLoaded === true && (
+              <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-emerald-700 shadow-xs">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>ML Model Operational</span>
+              </div>
+            )}
+            <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-xl px-3.5 py-2">
+              <ShieldAlert size={16} className="text-blue-600" />
+              <span className="text-xs font-bold text-blue-900">
+                Active Persona: {roleInfo.officerName} ({currentRole})
+              </span>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Red Warning Banner: Displayed ONLY when modelLoaded === false */}
+      {modelLoaded === false && (
+        <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-xl text-sm font-medium flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-2">
+            <AlertTriangle size={18} className="text-red-600 shrink-0" />
+            <span>⚠️ ML model artifacts not loaded.</span>
+          </div>
+          <button
+            type="button"
+            onClick={checkMLHealth}
+            className="text-xs font-bold text-red-700 hover:text-red-900 underline self-start sm:self-auto cursor-pointer"
+          >
+            Retry Health Check
+          </button>
+        </div>
+      )}
 
       {/* Preset Buttons */}
       <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-xs">
@@ -906,7 +970,8 @@ export default function EarlyWarningPredictor() {
         </form>
       </div>
 
-      {error && (
+      {/* General Prediction Error (do not duplicate if already showing model warning) */}
+      {error && (error !== 'ML model artifacts not loaded.' || modelLoaded !== false) && (
         <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-xl text-sm font-medium">
           ⚠️ {error}
         </div>
