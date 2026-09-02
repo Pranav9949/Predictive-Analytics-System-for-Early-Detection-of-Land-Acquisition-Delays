@@ -1,12 +1,15 @@
 # Environments & Virtual Environments
 venv/
 .venv/
+**/venv/
+**/.venv/
 env/
 .env
 *.venv
 
 # Python Byte-code / Cache
 __pycache__/
+**/__pycache__/
 *.py[cod]
 *$py.class
 *.so
