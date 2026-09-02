@@ -126,27 +126,43 @@ def retrain_model():
     )
     model.fit(X_train, y_train)
 
-    # Evaluate
-    y_pred = model.predict(X_test)
-    y_proba = model.predict_proba(X_test)[:, 1]
-
+    from sklearn.metrics import precision_score, recall_score, confusion_matrix
     acc = round(accuracy_score(y_test, y_pred), 4)
     auc = round(roc_auc_score(y_test, y_proba), 4)
     f1 = round(f1_score(y_test, y_pred), 4)
+    prec = round(precision_score(y_test, y_pred, pos_label=1), 4)
+    rec = round(recall_score(y_test, y_pred, pos_label=1), 4)
+    cm = confusion_matrix(y_test, y_pred)
+    tn, fp, fn, tp = [int(v) for v in cm.ravel()]
 
     # Save updated model
     joblib.dump(model, MODEL_FILE)
+    joblib.dump(encoder, ENCODER_FILE)
+    preproc_file = os.path.join(BASE_DIR, "preprocessor.pkl")
+    joblib.dump(encoder, preproc_file)
     print(f"  Updated model saved -> {MODEL_FILE}")
 
     # Save updated metrics
     metrics = {
         "timestamp": datetime.datetime.now().isoformat(),
-        "accuracy": acc,
-        "roc_auc": auc,
-        "f1_score": f1,
+        "model_name": "XGBoost Classifier",
+        "model_version": "v1.1-retrained",
+        "prediction_target": "delay_label",
+        "raw_features_count": len(NUMERIC_COLS) + len(CATEGORICAL_COLS),
+        "encoded_features_count": len(feature_columns),
         "train_size": int(X_train.shape[0]),
         "test_size": int(X_test.shape[0]),
-        "n_features": len(feature_columns),
+        "accuracy": acc,
+        "roc_auc": auc,
+        "precision": prec,
+        "recall": rec,
+        "f1_score": f1,
+        "confusion_matrix": {
+            "true_negatives": tn,
+            "false_positives": fp,
+            "false_negatives": fn,
+            "true_positives": tp,
+        },
         "retraining_trigger": "feedback_threshold_reached",
     }
 
@@ -164,7 +180,7 @@ def retrain_model():
     with open(METRICS_FILE, "w") as f:
         json.dump(metrics, f, indent=2)
 
-    print(f"  Accuracy: {acc}  |  F1: {f1}  |  AUC: {auc}")
+    print(f"  Accuracy: {acc}  |  Precision: {prec}  |  Recall: {rec}  |  F1: {f1}  |  AUC: {auc}")
     print("[continuous_learning] Retraining complete.")
 
     return metrics

@@ -19,36 +19,6 @@
 
 ---
 
-## 📋 Table of Contents
-
-- [Overview](#-overview)
-- [Problem Statement](#-problem-statement)
-- [Why This Matters](#-why-this-matters)
-- [Why This Is More Than a Dashboard](#-why-this-is-more-than-a-dashboard)
-- [Proposed Solution](#-proposed-solution)
-- [Key Features](#-key-features)
-- [How It Works](#-how-it-works)
-- [System Workflow](#-system-workflow)
-- [AI / ML Approach](#-ai--ml-approach)
-- [Explainable AI (SHAP)](#-explainable-ai-shap)
-- [Risk Scoring](#-risk-scoring)
-- [GIS Intelligence](#-gis-intelligence)
-- [Architecture](#-architecture)
-- [Technology Stack](#-technology-stack)
-- [Data Strategy](#-data-strategy)
-- [Demo Scenario](#-demo-scenario)
-- [Screenshots](#-screenshots)
-- [Installation & Setup](#-installation--setup)
-- [Project Structure](#-project-structure)
-- [API / Backend Endpoints](#-api--backend-endpoints)
-- [Expected Impact](#-expected-impact)
-- [Current MVP vs Future Scope](#-current-mvp-vs-future-scope)
-- [Challenges](#-challenges)
-- [Future Enhancements](#-future-enhancements)
-- [License & Acknowledgements](#-license--acknowledgements)
-
----
-
 ## 🔍 Overview
 
 **Land Acquisition Intelligence** is an AI-driven decision support and early-warning platform designed for state and central government infrastructure departments, district collectors, and land acquisition officers. 

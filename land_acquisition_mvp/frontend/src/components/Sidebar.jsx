@@ -1,6 +1,6 @@
 import React from 'react'
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, BarChart3, Map, Activity, ShieldCheck, ChevronDown, UserCircle2 } from 'lucide-react'
+import { LayoutDashboard, Sparkles, BarChart3, Map, Activity, ShieldCheck, ChevronDown, UserCircle2 } from 'lucide-react'
 import { useRole } from '../context/RoleContext'
 
 export default function Sidebar() {
@@ -8,6 +8,7 @@ export default function Sidebar() {
 
   const links = [
     { to: '/', icon: <LayoutDashboard size={20} />, label: 'Command Center' },
+    { to: '/predict-risk', icon: <Sparkles size={20} />, label: 'Early-Warning Predictor' },
     { to: '/analytics', icon: <BarChart3 size={20} />, label: 'Analytics' },
     { to: '/map', icon: <Map size={20} />, label: 'GIS Map' },
   ]

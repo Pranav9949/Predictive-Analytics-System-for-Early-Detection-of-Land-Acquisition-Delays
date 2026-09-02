@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { API_BASE } from '../App'
 import KPICards from '../components/KPICards'
 import AlertFeed from '../components/AlertFeed'
 import { useRole } from '../context/RoleContext'
-import { Shield, Sparkles, Building2, MapPin, Gauge } from 'lucide-react'
+import { Shield, Sparkles, Building2, MapPin, Gauge, ArrowRight } from 'lucide-react'
 
 export default function CommandCenter() {
   const { currentRole, roleInfo, token } = useRole()
@@ -106,12 +107,23 @@ export default function CommandCenter() {
           </p>
         </div>
 
-        {/* Live Persona Pill */}
-        <div className="flex items-center gap-2.5 bg-white border border-gray-200 shadow-xs px-3.5 py-2 rounded-xl shrink-0">
-          <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
-          <div className="text-xs">
-            <span className="text-gray-400 font-medium">Viewing as: </span>
-            <span className="font-bold text-gray-800">{roleInfo.officerName}</span>
+        {/* Action Controls & Live Persona Pill */}
+        <div className="flex items-center gap-3 shrink-0">
+          <Link
+            to="/predict-risk"
+            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2.5 rounded-xl shadow-xs text-xs transition-colors cursor-pointer"
+          >
+            <Sparkles size={15} />
+            Assess Project Delay Risk
+            <ArrowRight size={13} />
+          </Link>
+
+          <div className="flex items-center gap-2.5 bg-white border border-gray-200 shadow-xs px-3.5 py-2 rounded-xl">
+            <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
+            <div className="text-xs">
+              <span className="text-gray-400 font-medium">Viewing as: </span>
+              <span className="font-bold text-gray-800">{roleInfo.officerName}</span>
+            </div>
           </div>
         </div>
       </div>
