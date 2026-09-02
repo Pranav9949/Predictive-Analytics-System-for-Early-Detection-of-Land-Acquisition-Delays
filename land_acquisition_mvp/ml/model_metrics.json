@@ -1,10 +1,74 @@
 {
-  "timestamp": "2026-09-01T21:21:14.894916",
-  "accuracy": 0.962,
-  "roc_auc": 0.9925,
-  "f1_score": 0.9497,
+  "timestamp": "2026-09-02T13:00:40.995944",
+  "model_name": "XGBoost Classifier",
+  "model_version": "v1.0",
+  "prediction_target": "delay_label",
+  "raw_features_count": 13,
+  "encoded_features_count": 20,
+  "prediction_features": [
+    "district",
+    "project_type",
+    "total_acres",
+    "land_acquired_pct",
+    "approval_days_pending",
+    "compensation_disbursed_pct",
+    "legal_cases_count",
+    "ownership_disputes",
+    "rnp_progress_pct",
+    "possession_pct",
+    "affected_families",
+    "doc_deficiency_score",
+    "historical_district_delay_avg"
+  ],
+  "leakage_prevented_columns": [
+    "project_id",
+    "project_name",
+    "delay_label",
+    "actual_delay_days",
+    "intervention_taken",
+    "intervention_date"
+  ],
   "train_size": 4000,
   "test_size": 1000,
-  "n_features": 20,
+  "total_samples": 5000,
+  "accuracy": 0.965,
+  "roc_auc": 0.9916,
+  "precision": 0.9706,
+  "recall": 0.938,
+  "f1_score": 0.954,
+  "confusion_matrix": {
+    "true_negatives": 602,
+    "false_positives": 11,
+    "false_negatives": 24,
+    "true_positives": 363
+  },
+  "classification_report": {
+    "No Delay": {
+      "precision": 0.9616613418530351,
+      "recall": 0.9820554649265906,
+      "f1-score": 0.9717514124293786,
+      "support": 613.0
+    },
+    "Delay": {
+      "precision": 0.9705882352941176,
+      "recall": 0.937984496124031,
+      "f1-score": 0.9540078843626807,
+      "support": 387.0
+    },
+    "accuracy": 0.965,
+    "macro avg": {
+      "precision": 0.9661247885735764,
+      "recall": 0.9600199805253108,
+      "f1-score": 0.9628796483960296,
+      "support": 1000.0
+    },
+    "weighted avg": {
+      "precision": 0.9651160496147341,
+      "recall": 0.965,
+      "f1-score": 0.9648846670675665,
+      "support": 1000.0
+    }
+  },
+  "evaluation_strategy": "Stratified 80/20 train/test split. (Longitudinal snapshot temporal split planned for next release).",
   "retraining_trigger": "initial_training"
 }

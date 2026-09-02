@@ -67,7 +67,7 @@ async def ingest_csv(
                 "doc_deficiency_score", "historical_district_delay_avg"
             ]
         })
-        input_array = _prepare_input(p_input, app_state)
+        input_array, _ = _prepare_input(p_input, app_state)
         proba = model.predict_proba(input_array)[0][1]
         risk_score = round(float(proba) * 100, 1)
         

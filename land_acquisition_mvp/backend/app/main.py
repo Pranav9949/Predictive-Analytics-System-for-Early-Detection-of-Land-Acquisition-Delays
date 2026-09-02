@@ -73,6 +73,7 @@ from app.routes.whatif import router as whatif_router
 from app.routes.feedback import router as feedback_router
 from app.routes.alerts import router as alerts_router
 from app.routes.geo import router as geo_router
+from app.routes.model_health import router as model_health_router
 
 app.include_router(auth_router, tags=["Auth"])
 app.include_router(ingest_router, tags=["Ingest"])
@@ -82,3 +83,4 @@ app.include_router(whatif_router, tags=["Simulator"])
 app.include_router(feedback_router, tags=["Learning Loop"])
 app.include_router(alerts_router, tags=["Alerts"])
 app.include_router(geo_router, tags=["GIS"])
+app.include_router(model_health_router, tags=["Model Governance"])

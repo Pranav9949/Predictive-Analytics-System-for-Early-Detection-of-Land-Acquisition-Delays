@@ -19,7 +19,13 @@ async def update_intervention(
 ):
     proj = db.query(Project).filter(Project.project_id == update.project_id).first()
     if not proj:
-        raise HTTPException(status_code=404, detail="Project not found")
+        proj = Project(
+            project_id=update.project_id,
+            project_name=f"Project #{update.project_id}",
+            district="Pune",
+            project_type="Highway",
+        )
+        db.add(proj)
         
     proj.intervention_taken = update.intervention_taken
     proj.intervention_date = datetime.now()
