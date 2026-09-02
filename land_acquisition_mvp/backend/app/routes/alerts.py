@@ -11,6 +11,7 @@ from app.models import AlertItem
 router = APIRouter()
 
 @router.get("/alerts/trigger", response_model=List[AlertItem])
+@router.get("/alerts/critical", response_model=List[AlertItem])
 async def get_alerts(db: Session = Depends(get_db)):
     """
     Returns a list of high-risk projects that require immediate attention.

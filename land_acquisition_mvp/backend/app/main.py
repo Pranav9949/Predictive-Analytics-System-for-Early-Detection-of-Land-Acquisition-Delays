@@ -2,7 +2,8 @@
 main.py - FastAPI Application Entry Point (V2)
 ==============================================
 Operational platform entry point. Loads ML artifacts, DB schema, 
-and includes all 8 operational routes.
+seeds ongoing projects, and includes all 8 operational routes.
+Optimized for native Python 3 deployment on Render.
 """
 
 import os
@@ -13,37 +14,84 @@ import joblib
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+# Ensure ML and backend root directories are in sys.path
 ML_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "ml"))
-sys.path.insert(0, ML_DIR)
+BACKEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+if ML_DIR not in sys.path:
+    sys.path.insert(0, ML_DIR)
+if BACKEND_DIR not in sys.path:
+    sys.path.insert(0, BACKEND_DIR)
 
 from explainer import SHAPExplainer
 from app.database import Base, engine
-
-# Init DB for SQLite (if applicable)
-Base.metadata.create_all(bind=engine)
+from seed_database import seed_projects
 
 app_state = {}
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("[INFO] Loading ML model artifacts for V2 Platform...")
-    
+    # 1. Create database tables
+    print("[STARTUP] Initializing database...", flush=True)
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception as e:
+        print(f"[ERROR] Database initialization failed: {e}", flush=True)
+        raise
+
     model_path = os.path.join(ML_DIR, "delay_model.pkl")
     encoder_path = os.path.join(ML_DIR, "encoder.pkl")
     columns_path = os.path.join(ML_DIR, "feature_columns.pkl")
-    
+
+    # 2. Load ML model
+    print("[STARTUP] Loading ML model...", flush=True)
     try:
         app_state["model"] = joblib.load(model_path)
-        app_state["encoder"] = joblib.load(encoder_path)
-        app_state["feature_columns"] = joblib.load(columns_path)
-        app_state["shap_explainer"] = SHAPExplainer()
-        print("[OK] All ML artifacts loaded successfully.")
     except Exception as e:
-        print(f"[WARN] ML artifact error: {e}")
-        
+        print(f"[ERROR] Loading ML model failed: {e}", flush=True)
+        raise
+
+    # 3. Load encoder
+    print("[STARTUP] Loading encoder...", flush=True)
+    try:
+        app_state["encoder"] = joblib.load(encoder_path)
+    except Exception as e:
+        print(f"[ERROR] Loading encoder failed: {e}", flush=True)
+        raise
+
+    # 4. Load feature columns
+    print("[STARTUP] Loading feature columns...", flush=True)
+    try:
+        app_state["feature_columns"] = joblib.load(columns_path)
+    except Exception as e:
+        print(f"[ERROR] Loading feature columns failed: {e}", flush=True)
+        raise
+
+    # 5. Initialize SHAP explainer
+    print("[STARTUP] Initializing SHAP...", flush=True)
+    try:
+        app_state["shap_explainer"] = SHAPExplainer()
+    except Exception as e:
+        print(f"[ERROR] Initializing SHAP failed: {e}", flush=True)
+        raise
+
+    # 6. Seed ongoing projects into database
+    print("[STARTUP] Seeding project database...", flush=True)
+    try:
+        seed_projects()
+    except Exception as e:
+        print(f"[ERROR] Seeding project database failed: {e}", flush=True)
+        raise
+
+    # 7. Mark application ready
+    print("[STARTUP] Application ready", flush=True)
+
     yield
+
     app_state.clear()
-    print("[INFO] Cleaned up ML artifacts.")
+    print("[INFO] Cleaned up ML artifacts.", flush=True)
+
 
 app = FastAPI(
     title="Land Acquisition Command Center",
@@ -60,9 +108,30 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/health")
 async def health_check():
-    return {"status": "operational", "model_loaded": "model" in app_state, "version": "2.0.0"}
+    """Reports actual dynamic inference readiness calculated from runtime state."""
+    model_loaded = "model" in app_state and app_state["model"] is not None
+    encoder_loaded = "encoder" in app_state and app_state["encoder"] is not None
+    feature_columns_loaded = "feature_columns" in app_state and app_state["feature_columns"] is not None
+    shap_loaded = "shap_explainer" in app_state and app_state["shap_explainer"] is not None
+
+    prediction_ready = bool(
+        model_loaded and encoder_loaded and feature_columns_loaded and shap_loaded
+    )
+    status = "operational" if prediction_ready else "degraded"
+
+    return {
+        "status": status,
+        "model_loaded": model_loaded,
+        "encoder_loaded": encoder_loaded,
+        "feature_columns_loaded": feature_columns_loaded,
+        "shap_loaded": shap_loaded,
+        "prediction_ready": prediction_ready,
+        "version": "2.0.0",
+    }
+
 
 # ── Routers ──
 from app.routes.auth import router as auth_router
