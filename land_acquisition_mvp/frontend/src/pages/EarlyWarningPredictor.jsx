@@ -10,7 +10,6 @@ import {
   FileCheck,
   Building2,
   TrendingDown,
-  Info,
   Send,
   RefreshCw,
   Scale,
@@ -24,7 +23,7 @@ import {
 // Section 8 Pune Highway sample from the official SIH specification
 const SAMPLE_PRESETS = {
   puneHighway: {
-    name: 'Pune Highway (SIH Section 8 Sample - High Risk)',
+    name: 'Pune Highway (High Risk)',
     data: {
       district: 'Pune',
       project_type: 'Highway',
@@ -312,9 +311,6 @@ export default function EarlyWarningPredictor() {
                 <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
                   Early-Warning Delay Prediction
                 </h1>
-                <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider">
-                  Smart India Hackathon 2026 AI/ML Pipeline
-                </p>
               </div>
             </div>
           </div>
@@ -323,19 +319,6 @@ export default function EarlyWarningPredictor() {
             <span className="text-xs font-bold text-blue-900">
               Active Persona: {roleInfo.officerName} ({currentRole})
             </span>
-          </div>
-        </div>
-
-        {/* SIH Core Principle Banner */}
-        <div className="mt-5 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border border-blue-200/80 rounded-xl p-4 shadow-xs">
-          <div className="flex items-start gap-3">
-            <Info className="text-blue-600 shrink-0 mt-0.5" size={18} />
-            <div className="text-xs leading-relaxed text-gray-700">
-              <strong className="text-gray-900 font-semibold block text-sm mb-0.5">
-                Core Early-Warning Principle:
-              </strong>
-              "This is an <strong>early-warning prediction</strong> based on the project's current state, not a retrospective classification of an already completed delay. Predictions isolate strictly the <strong>13 prediction-time features</strong> without outcome data leakage."
-            </div>
           </div>
         </div>
       </div>
@@ -613,37 +596,33 @@ export default function EarlyWarningPredictor() {
         <div className="space-y-8 animate-fadeIn">
           {/* 1. Primary Risk Probability Card */}
           <div className="bg-white rounded-2xl border border-gray-200 shadow-xs p-6 lg:p-8">
-            <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
+            <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-4">
               PROJECT RISK ASSESSMENT (EARLY WARNING)
             </div>
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-gray-100 pb-6">
-              <div className="space-y-1">
-                <div className="flex items-baseline gap-4">
-                  <div className={`text-5xl lg:text-6xl font-black tracking-tight ${getRiskColorClass(prediction.risk_category)}`}>
-                    {prediction.risk_score}%
-                  </div>
-                  <div>
-                    <span className="text-lg font-bold text-gray-900 block">
-                      Probability of Future Delay
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      Evaluated by trained XGBoost Classifier (P = {prediction.delay_probability})
-                    </span>
-                  </div>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="flex items-center gap-4">
+                <div className={`text-5xl lg:text-6xl font-black tracking-tight leading-none ${getRiskColorClass(prediction.risk_category)}`}>
+                  {prediction.risk_score}%
+                </div>
+                <div className="flex flex-col justify-center">
+                  <span className="text-lg lg:text-xl font-bold text-gray-900 leading-tight">
+                    Probability of Future Delay
+                  </span>
+                  <span className="text-xs text-gray-500 mt-0.5">
+                    Evaluated by trained XGBoost Classifier (P = {prediction.delay_probability})
+                  </span>
                 </div>
               </div>
 
-              <div className="flex flex-col items-start md:items-end gap-1">
-                <span className="text-xs text-gray-500 font-semibold uppercase">Risk Classification</span>
+              <div className="flex flex-col items-center text-center gap-1.5">
+                <span className="text-xs text-gray-500 font-semibold uppercase tracking-wider">
+                  Risk Classification
+                </span>
                 <span className={`text-base font-black px-4 py-1.5 rounded-xl border uppercase tracking-wider shadow-xs ${getRiskBadge(prediction.risk_category)}`}>
                   {prediction.risk_category} RISK
                 </span>
               </div>
             </div>
-
-            <p className="text-xs text-gray-600 mt-4 leading-relaxed bg-gray-50 p-3 rounded-lg border border-gray-100">
-              ℹ️ <strong>Interpretation Guide:</strong> This is a model-estimated probability of whether this land acquisition parcel is vulnerable to statutory milestone delays, derived from current field parameters. It is an early-warning signal for proactive administrative intervention, not a certainty.
-            </p>
           </div>
 
           {/* 2. SHAP Explainability: Why Is This Project At Risk? */}
