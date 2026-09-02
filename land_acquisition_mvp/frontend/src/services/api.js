@@ -3,8 +3,11 @@ import axios from "axios";
 /**
  * Centralized Axios instance configured for FastAPI Backend (Local or Render)
  */
+const rawBaseURL = import.meta.env.VITE_API_URL || "";
+const apiBaseURL = rawBaseURL.replace(/\/+$/, "");
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: apiBaseURL,
   headers: {
     "Content-Type": "application/json",
   },
@@ -13,7 +16,7 @@ const api = axios.create({
 // Development-only console check for missing environment variable
 if (import.meta.env.DEV && !import.meta.env.VITE_API_URL) {
   console.error(
-    "[API Configuration Error] VITE_API_URL is missing or undefined. In local development, configure VITE_API_URL=http://localhost:8000 in your .env file."
+    "[API Configuration Error] VITE_API_URL is missing or undefined. Configure VITE_API_URL in your .env file."
   );
 }
 
