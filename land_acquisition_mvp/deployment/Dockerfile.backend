@@ -16,7 +16,7 @@ RUN cd /app/ml && python generate_data.py && python train_model.py
 
 COPY land_acquisition_mvp/backend/ /app/backend/
 
-ENV PYTHONPATH="/app"
+ENV PYTHONPATH="/app:/app/backend"
 
 EXPOSE 8000
 
