@@ -9,7 +9,7 @@ import ModelHealth from './pages/ModelHealth'
 export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 function App() {
-  const [token, setToken] = useState(null)
+  const [token, setToken] = useState(() => localStorage.getItem('auth_token') || null)
   
   // Simple login handler for the MVP Demo
   const handleLogin = async (e) => {
