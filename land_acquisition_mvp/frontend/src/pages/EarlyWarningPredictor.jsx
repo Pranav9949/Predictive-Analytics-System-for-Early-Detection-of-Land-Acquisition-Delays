@@ -595,7 +595,6 @@ export default function EarlyWarningPredictor() {
                   </div>
                   {searchResults.map((proj, idx) => {
                     const isSelected = activeSearchIndex === idx
-                    const riskBadgeClass = getRiskBadge(proj.risk_category || 'Low')
                     return (
                       <div
                         key={proj.project_id}
@@ -625,14 +624,10 @@ export default function EarlyWarningPredictor() {
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-3 shrink-0">
-                          <div className="text-right">
-                            <span className={`text-[11px] font-bold px-2.5 py-1 rounded-md border ${riskBadgeClass}`}>
-                              {proj.risk_score !== null && proj.risk_score !== undefined
-                                ? `Current Risk: ${proj.risk_category || 'Low'} (${proj.risk_score}%)`
-                                : `Current Risk: ${proj.risk_category || 'Low'}`}
-                            </span>
-                          </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-xs font-semibold text-blue-600 bg-blue-50/80 hover:bg-blue-100 px-2.5 py-1 rounded-md border border-blue-200 transition-colors">
+                            Select Project
+                          </span>
                           <ArrowRight size={15} className={`text-gray-400 ${isSelected ? 'text-blue-600 translate-x-0.5' : ''} transition-all`} />
                         </div>
                       </div>
@@ -672,9 +667,9 @@ export default function EarlyWarningPredictor() {
                     <span className="text-[10px] text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200 font-medium">
                       {selectedProjectMeta.presetLabel}
                     </span>
-                  ) : selectedProjectMeta.risk_category && (
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${getRiskBadge(selectedProjectMeta.risk_category)}`}>
-                      {selectedProjectMeta.risk_category} Risk Record
+                  ) : (
+                    <span className="text-[10px] text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200 font-medium">
+                      Database Record
                     </span>
                   )}
                 </div>
