@@ -10,13 +10,15 @@ Strictly prevents data leakage by isolating the 13 prediction-time features.
 
 import os
 import sys
-from typing import List, Dict, Any
+import re
+from typing import List, Dict, Any, Optional
 import numpy as np
 import pandas as pd
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
+from sqlalchemy import or_, and_, cast, String
 
-from app.models import ProjectInput, PredictionResponse, SHAPDriver, StageRisk
+from app.models import ProjectInput, PredictionResponse, SHAPDriver, StageRisk, ProjectSearchResult
 from app.database import get_db, Project
 
 ML_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "ml"))
@@ -32,28 +34,28 @@ router = APIRouter()
 
 def _prepare_input(project: ProjectInput, app_state: dict) -> tuple[np.ndarray, dict]:
     """
-    Extract ONLY the 13 prediction-time features.
+    Extract ONLY the 13 prediction-time features using strictly absolute values.
     Guarantees no target or outcome column enters the pipeline.
     """
     encoder = app_state["encoder"]
 
     # Normalize doc_deficiency_score if given as percentage 0-100
-    doc_score = float(project.doc_deficiency_score)
+    doc_score = abs(float(project.doc_deficiency_score))
     if doc_score > 1.0:
         doc_score = doc_score / 100.0
 
     numeric_values = [
-        float(project.total_acres),
-        float(project.land_acquired_pct),
-        float(project.approval_days_pending),
-        float(project.compensation_disbursed_pct),
-        float(project.legal_cases_count),
-        float(project.ownership_disputes),
-        float(project.rnp_progress_pct),
-        float(project.possession_pct),
-        float(project.affected_families),
-        doc_score,
-        float(project.historical_district_delay_avg),
+        abs(float(project.total_acres)),
+        abs(float(project.land_acquired_pct)),
+        abs(int(project.approval_days_pending)),
+        abs(float(project.compensation_disbursed_pct)),
+        abs(int(project.legal_cases_count)),
+        abs(int(project.ownership_disputes)),
+        abs(float(project.rnp_progress_pct)),
+        abs(float(project.possession_pct)),
+        abs(int(project.affected_families)),
+        abs(doc_score),
+        abs(float(project.historical_district_delay_avg)),
     ]
 
     cat_df = pd.DataFrame([[project.district, project.project_type]], columns=CATEGORICAL_COLS)
@@ -64,17 +66,17 @@ def _prepare_input(project: ProjectInput, app_state: dict) -> tuple[np.ndarray, 
     feature_dict = {
         "district": project.district,
         "project_type": project.project_type,
-        "total_acres": project.total_acres,
-        "land_acquired_pct": project.land_acquired_pct,
-        "approval_days_pending": project.approval_days_pending,
-        "compensation_disbursed_pct": project.compensation_disbursed_pct,
-        "legal_cases_count": project.legal_cases_count,
-        "ownership_disputes": project.ownership_disputes,
-        "rnp_progress_pct": project.rnp_progress_pct,
-        "possession_pct": project.possession_pct,
-        "affected_families": project.affected_families,
-        "doc_deficiency_score": round(doc_score, 3),
-        "historical_district_delay_avg": project.historical_district_delay_avg,
+        "total_acres": abs(float(project.total_acres)),
+        "land_acquired_pct": abs(float(project.land_acquired_pct)),
+        "approval_days_pending": abs(int(project.approval_days_pending)),
+        "compensation_disbursed_pct": abs(float(project.compensation_disbursed_pct)),
+        "legal_cases_count": abs(int(project.legal_cases_count)),
+        "ownership_disputes": abs(int(project.ownership_disputes)),
+        "rnp_progress_pct": abs(float(project.rnp_progress_pct)),
+        "possession_pct": abs(float(project.possession_pct)),
+        "affected_families": abs(int(project.affected_families)),
+        "doc_deficiency_score": round(abs(doc_score), 3),
+        "historical_district_delay_avg": abs(float(project.historical_district_delay_avg)),
     }
 
     return input_array, feature_dict
@@ -243,3 +245,125 @@ async def predict_delay(
         stage_risks_list=stage_risks_list,
         base_probability=base_probability,
     )
+
+
+@router.get("/projects/search", response_model=List[ProjectSearchResult])
+async def search_projects(
+    q: Optional[str] = "",
+    limit: int = 15,
+    db: Session = Depends(get_db)
+):
+    """
+    Search existing project records by Project ID, District, Project Type, or Name.
+    Returns 13 prediction parameters ready for auto-population.
+    """
+    query_str = (q or "").strip()
+    target_pid = None
+    if not query_str:
+        projects = db.query(Project).limit(limit).all()
+    else:
+        filters = []
+        digits = re.findall(r'\d+', query_str)
+        if digits:
+            try:
+                # If digits like '2026-184' or '184', the specific project ID is usually the last number
+                target_pid = int(digits[-1])
+                filters.append(Project.project_id == target_pid)
+            except ValueError:
+                pass
+
+        tokens = query_str.split()
+        if len(tokens) > 1:
+            token_filters = []
+            for t in tokens:
+                token_filters.append(or_(
+                    Project.project_name.ilike(f"%{t}%"),
+                    Project.district.ilike(f"%{t}%"),
+                    Project.project_type.ilike(f"%{t}%"),
+                    cast(Project.project_id, String).ilike(f"%{t}%")
+                ))
+            filters.append(and_(*token_filters))
+        else:
+            filters.append(or_(
+                Project.project_name.ilike(f"%{query_str}%"),
+                Project.district.ilike(f"%{query_str}%"),
+                Project.project_type.ilike(f"%{query_str}%"),
+                cast(Project.project_id, String).ilike(f"%{query_str}%")
+            ))
+
+        projects = db.query(Project).filter(or_(*filters)).limit(limit * 2).all()
+
+        # Prioritize exact ID match, then name prefix matches
+        if target_pid is not None:
+            projects = sorted(projects, key=lambda p: (0 if p.project_id == target_pid else 1))
+        projects = projects[:limit]
+
+    results = []
+    for p in projects:
+        doc_pct = abs(round(p.doc_deficiency_score * 100, 1) if (p.doc_deficiency_score is not None and p.doc_deficiency_score <= 1.0) else (p.doc_deficiency_score or 0.0))
+        risk_score = abs(float(p.risk_score)) if p.risk_score is not None else None
+        risk_cat = p.risk_category
+        if (not risk_cat or risk_cat == "Unknown") and risk_score is not None:
+            risk_cat = get_risk_category(risk_score)
+
+        results.append(
+            ProjectSearchResult(
+                project_id=p.project_id,
+                formatted_id=f"PRJ-2026-{p.project_id:04d}",
+                project_name=p.project_name or f"Project #{p.project_id}",
+                district=p.district or "Pune",
+                project_type=p.project_type or "Highway",
+                total_acres=abs(float(p.total_acres or 0.0)),
+                land_acquired_pct=abs(float(p.land_acquired_pct or 0.0)),
+                approval_days_pending=abs(int(p.approval_days_pending or 0)),
+                compensation_disbursed_pct=abs(float(p.compensation_disbursed_pct or 0.0)),
+                legal_cases_count=abs(int(p.legal_cases_count or 0)),
+                ownership_disputes=abs(int(p.ownership_disputes or 0)),
+                rnp_progress_pct=abs(float(p.rnp_progress_pct or 0.0)),
+                possession_pct=abs(float(p.possession_pct or 0.0)),
+                affected_families=abs(int(p.affected_families or 0)),
+                doc_deficiency_score=abs(float(doc_pct)),
+                historical_district_delay_avg=abs(float(p.historical_district_delay_avg or 0.0)),
+                risk_score=risk_score,
+                risk_category=risk_cat or "Unknown",
+            )
+        )
+
+    return results
+
+
+@router.get("/projects/{project_id}", response_model=ProjectSearchResult)
+async def get_project_by_id(
+    project_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Get a single project record by its primary key ID with strictly absolute values.
+    """
+    p = db.query(Project).filter(Project.project_id == project_id).first()
+    if not p:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    doc_pct = abs(round(p.doc_deficiency_score * 100, 1) if (p.doc_deficiency_score is not None and p.doc_deficiency_score <= 1.0) else (p.doc_deficiency_score or 0.0))
+    risk_score = abs(float(p.risk_score)) if p.risk_score is not None else None
+    return ProjectSearchResult(
+        project_id=p.project_id,
+        formatted_id=f"PRJ-2026-{p.project_id:04d}",
+        project_name=p.project_name or f"Project #{p.project_id}",
+        district=p.district or "Pune",
+        project_type=p.project_type or "Highway",
+        total_acres=abs(float(p.total_acres or 0.0)),
+        land_acquired_pct=abs(float(p.land_acquired_pct or 0.0)),
+        approval_days_pending=abs(int(p.approval_days_pending or 0)),
+        compensation_disbursed_pct=abs(float(p.compensation_disbursed_pct or 0.0)),
+        legal_cases_count=abs(int(p.legal_cases_count or 0)),
+        ownership_disputes=abs(int(p.ownership_disputes or 0)),
+        rnp_progress_pct=abs(float(p.rnp_progress_pct or 0.0)),
+        possession_pct=abs(float(p.possession_pct or 0.0)),
+        affected_families=abs(int(p.affected_families or 0)),
+        doc_deficiency_score=abs(float(doc_pct)),
+        historical_district_delay_avg=abs(float(p.historical_district_delay_avg or 0.0)),
+        risk_score=risk_score,
+        risk_category=p.risk_category or "Unknown",
+    )
+

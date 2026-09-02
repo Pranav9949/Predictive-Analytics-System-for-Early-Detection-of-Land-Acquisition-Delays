@@ -50,20 +50,20 @@ function DrillDownModal({ project, onClose, apiBase }) {
       try {
         setPredLoading(true);
         const body = {
-          project_id: project.project_id,
+          project_id: project.project_id ? Math.abs(Number(project.project_id)) : undefined,
           district: project.district,
           project_type: project.project_type,
-          total_acres: project.total_acres,
-          land_acquired_pct: project.land_acquired_pct,
-          approval_days_pending: project.approval_days_pending,
-          compensation_disbursed_pct: project.compensation_disbursed_pct,
-          legal_cases_count: project.legal_cases_count,
-          ownership_disputes: project.ownership_disputes,
-          rnp_progress_pct: project.rnp_progress_pct,
-          possession_pct: project.possession_pct,
-          affected_families: project.affected_families,
-          doc_deficiency_score: project.doc_deficiency_score,
-          historical_district_delay_avg: project.historical_district_delay_avg,
+          total_acres: Math.abs(parseFloat(project.total_acres) || 0),
+          land_acquired_pct: Math.min(100, Math.abs(parseFloat(project.land_acquired_pct) || 0)),
+          approval_days_pending: Math.abs(parseInt(project.approval_days_pending, 10) || 0),
+          compensation_disbursed_pct: Math.min(100, Math.abs(parseFloat(project.compensation_disbursed_pct) || 0)),
+          legal_cases_count: Math.abs(parseInt(project.legal_cases_count, 10) || 0),
+          ownership_disputes: Math.abs(parseInt(project.ownership_disputes, 10) || 0),
+          rnp_progress_pct: Math.min(100, Math.abs(parseFloat(project.rnp_progress_pct) || 0)),
+          possession_pct: Math.min(100, Math.abs(parseFloat(project.possession_pct) || 0)),
+          affected_families: Math.abs(parseInt(project.affected_families, 10) || 0),
+          doc_deficiency_score: Math.abs(parseFloat(project.doc_deficiency_score) || 0),
+          historical_district_delay_avg: Math.abs(parseFloat(project.historical_district_delay_avg) || 0),
         };
 
         const resp = await fetch(`${apiBase}/predict`, {
@@ -100,23 +100,23 @@ function DrillDownModal({ project, onClose, apiBase }) {
       setWhatifLoading(true);
       const body = {
         project: {
-          project_id: project.project_id,
+          project_id: project.project_id ? Math.abs(Number(project.project_id)) : undefined,
           district: project.district,
           project_type: project.project_type,
-          total_acres: project.total_acres,
-          land_acquired_pct: project.land_acquired_pct,
-          approval_days_pending: project.approval_days_pending,
-          compensation_disbursed_pct: project.compensation_disbursed_pct,
-          legal_cases_count: project.legal_cases_count,
-          ownership_disputes: project.ownership_disputes,
-          rnp_progress_pct: project.rnp_progress_pct,
-          possession_pct: project.possession_pct,
-          affected_families: project.affected_families,
-          doc_deficiency_score: project.doc_deficiency_score,
-          historical_district_delay_avg: project.historical_district_delay_avg,
+          total_acres: Math.abs(parseFloat(project.total_acres) || 0),
+          land_acquired_pct: Math.min(100, Math.abs(parseFloat(project.land_acquired_pct) || 0)),
+          approval_days_pending: Math.abs(parseInt(project.approval_days_pending, 10) || 0),
+          compensation_disbursed_pct: Math.min(100, Math.abs(parseFloat(project.compensation_disbursed_pct) || 0)),
+          legal_cases_count: Math.abs(parseInt(project.legal_cases_count, 10) || 0),
+          ownership_disputes: Math.abs(parseInt(project.ownership_disputes, 10) || 0),
+          rnp_progress_pct: Math.min(100, Math.abs(parseFloat(project.rnp_progress_pct) || 0)),
+          possession_pct: Math.min(100, Math.abs(parseFloat(project.possession_pct) || 0)),
+          affected_families: Math.abs(parseInt(project.affected_families, 10) || 0),
+          doc_deficiency_score: Math.abs(parseFloat(project.doc_deficiency_score) || 0),
+          historical_district_delay_avg: Math.abs(parseFloat(project.historical_district_delay_avg) || 0),
         },
         feature_to_change: selectedFeature,
-        new_value: value,
+        new_value: Math.abs(parseFloat(value) || 0),
       };
 
       const resp = await fetch(`${apiBase}/whatif`, {

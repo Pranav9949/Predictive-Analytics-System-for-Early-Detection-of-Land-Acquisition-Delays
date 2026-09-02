@@ -44,25 +44,25 @@ async def get_projects_geo(db: Session = Depends(get_db)):
                 "coordinates": [round(lon, 6), round(lat, 6)]
             },
             "properties": {
-                "project_id": p.project_id,
+                "project_id": abs(int(p.project_id)),
                 "project_name": p.project_name,
                 "district": p.district,
                 "project_type": p.project_type,
-                "total_acres": p.total_acres,
-                "risk_score": p.risk_score if p.risk_score else 0.0,
+                "total_acres": abs(float(p.total_acres or 0.0)),
+                "risk_score": abs(float(p.risk_score)) if p.risk_score else 0.0,
                 "risk_category": p.risk_category if p.risk_category else "Unknown",
                 "intervention_taken": p.intervention_taken,
                 # Additional fields for the frontend table
-                "compensation_disbursed_pct": p.compensation_disbursed_pct,
-                "legal_cases_count": p.legal_cases_count,
-                "ownership_disputes": p.ownership_disputes,
-                "approval_days_pending": p.approval_days_pending,
-                "rnp_progress_pct": p.rnp_progress_pct,
-                "possession_pct": p.possession_pct,
-                "doc_deficiency_score": p.doc_deficiency_score,
-                "affected_families": p.affected_families,
-                "historical_district_delay_avg": p.historical_district_delay_avg,
-                "land_acquired_pct": p.land_acquired_pct
+                "compensation_disbursed_pct": abs(float(p.compensation_disbursed_pct or 0.0)),
+                "legal_cases_count": abs(int(p.legal_cases_count or 0)),
+                "ownership_disputes": abs(int(p.ownership_disputes or 0)),
+                "approval_days_pending": abs(int(p.approval_days_pending or 0)),
+                "rnp_progress_pct": abs(float(p.rnp_progress_pct or 0.0)),
+                "possession_pct": abs(float(p.possession_pct or 0.0)),
+                "doc_deficiency_score": abs(float(p.doc_deficiency_score or 0.0)),
+                "affected_families": abs(int(p.affected_families or 0)),
+                "historical_district_delay_avg": abs(float(p.historical_district_delay_avg or 0.0)),
+                "land_acquired_pct": abs(float(p.land_acquired_pct or 0.0))
             }
         })
         

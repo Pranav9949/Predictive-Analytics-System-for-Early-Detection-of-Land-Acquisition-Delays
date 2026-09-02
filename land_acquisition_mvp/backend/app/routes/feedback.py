@@ -23,17 +23,18 @@ async def submit_feedback(
     db: Session = Depends(get_db),
     user: dict = Depends(require_role(["LAO", "Collector"]))
 ):
-    proj = db.query(Project).filter(Project.project_id == feedback.project_id).first()
+    proj = db.query(Project).filter(Project.project_id == abs(int(feedback.project_id))).first()
     if not proj:
         raise HTTPException(status_code=404, detail="Project not found")
         
-    proj.actual_delay_days = feedback.actual_delay_days
+    actual_delay = abs(int(feedback.actual_delay_days))
+    proj.actual_delay_days = actual_delay
     
     # Log feedback for continuous learning
     feedback_res = continuous_learning.log_feedback(
-        project_id=feedback.project_id,
-        predicted_risk=proj.risk_score if proj.risk_score else 0.0,
-        actual_delay_days=feedback.actual_delay_days
+        project_id=abs(int(feedback.project_id)),
+        predicted_risk=abs(float(proj.risk_score if proj.risk_score else 0.0)),
+        actual_delay_days=actual_delay
     )
     
     # Check if we should retrain

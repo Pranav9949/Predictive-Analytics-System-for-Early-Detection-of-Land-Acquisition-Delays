@@ -112,6 +112,27 @@ class AlertItem(BaseModel):
     recommended_action: str
 
 
+class ProjectSearchResult(BaseModel):
+    project_id: int
+    formatted_id: str
+    project_name: str
+    district: str
+    project_type: str
+    total_acres: float
+    land_acquired_pct: float
+    approval_days_pending: int
+    compensation_disbursed_pct: float
+    legal_cases_count: int
+    ownership_disputes: int
+    rnp_progress_pct: float
+    possession_pct: float
+    affected_families: int
+    doc_deficiency_score: float
+    historical_district_delay_avg: float
+    risk_score: Optional[float] = None
+    risk_category: Optional[str] = None
+
+
 # ──────────────────────────────────────────────────────────────
 # Prediction & Model Health Response Schemas
 # ──────────────────────────────────────────────────────────────

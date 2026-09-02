@@ -34,7 +34,7 @@ async def whatif_simulation(request: WhatIfRequest):
     model = app_state["model"]
     project = request.project
     feature = request.feature_to_change
-    new_value = request.new_value
+    new_value = abs(float(request.new_value))
 
     # 1. Calculate original risk
     original_input, _ = _prepare_input(project, app_state)

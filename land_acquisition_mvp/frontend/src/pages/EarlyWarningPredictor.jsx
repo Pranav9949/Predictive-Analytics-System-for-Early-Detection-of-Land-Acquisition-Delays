@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { API_BASE } from '../App'
 import { useRole } from '../context/RoleContext'
 import {
@@ -17,7 +17,12 @@ import {
   Clock,
   Home,
   ShieldAlert,
-  ArrowRight
+  ArrowRight,
+  Search,
+  X,
+  Check,
+  RotateCcw,
+  Database
 } from 'lucide-react'
 
 // Section 8 Pune Highway sample from the official SIH specification
@@ -108,9 +113,29 @@ export default function EarlyWarningPredictor() {
   const { currentRole, roleInfo } = useRole()
 
   const [formData, setFormData] = useState(SAMPLE_PRESETS.puneHighway.data)
+  const [activePresetKey, setActivePresetKey] = useState('puneHighway')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [prediction, setPrediction] = useState(null)
+
+  // Project Search State
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState([])
+  const [searchLoading, setSearchLoading] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [activeSearchIndex, setActiveSearchIndex] = useState(-1)
+  const [selectedProjectMeta, setSelectedProjectMeta] = useState({
+    formatted_id: 'PRJ-2026-0101',
+    project_id: 101,
+    project_name: 'Pune-Solapur Highway Expansion #101',
+    district: 'Pune',
+    project_type: 'Highway',
+    source: 'preset',
+    presetLabel: 'Pune Highway (High Risk)'
+  })
+
+  const searchContainerRef = useRef(null)
+  const searchInputRef = useRef(null)
 
   // What-If Simulation State
   const [whatifFeature, setWhatifFeature] = useState('compensation_disbursed_pct')
@@ -125,18 +150,158 @@ export default function EarlyWarningPredictor() {
   const [interventionSuccess, setInterventionSuccess] = useState(false)
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
+    const integerFields = ['approval_days_pending', 'legal_cases_count', 'ownership_disputes', 'affected_families', 'project_id']
+    const floatFields = ['total_acres', 'land_acquired_pct', 'compensation_disbursed_pct', 'rnp_progress_pct', 'possession_pct', 'doc_deficiency_score', 'historical_district_delay_avg']
+    
+    let processedValue = value
+    if (value !== '' && value !== null && value !== undefined) {
+      if (integerFields.includes(field)) {
+        const num = parseInt(value, 10)
+        if (!isNaN(num)) processedValue = Math.abs(num)
+      } else if (floatFields.includes(field)) {
+        const num = parseFloat(value)
+        if (!isNaN(num)) processedValue = Math.abs(num)
+      }
+    }
+    setFormData(prev => ({ ...prev, [field]: processedValue }))
   }
 
   const loadPreset = (presetKey) => {
     const preset = SAMPLE_PRESETS[presetKey]
     if (preset) {
       setFormData(preset.data)
+      setActivePresetKey(presetKey)
+      setSelectedProjectMeta({
+        formatted_id: `PRJ-2026-${String(preset.data.project_id).padStart(4, '0')}`,
+        project_id: preset.data.project_id,
+        project_name: preset.data.project_name,
+        district: preset.data.district,
+        project_type: preset.data.project_type,
+        source: 'preset',
+        presetLabel: preset.name
+      })
       setPrediction(null)
       setWhatifResult(null)
       setInterventionSuccess(false)
       setError(null)
+      setSearchQuery('')
+      setSearchResults([])
+      setSearchOpen(false)
     }
+  }
+
+  // Search Debounce Effect
+  useEffect(() => {
+    const q = searchQuery.trim()
+    if (!q) {
+      setSearchResults([])
+      setSearchLoading(false)
+      return
+    }
+
+    setSearchLoading(true)
+    const timeoutId = setTimeout(async () => {
+      try {
+        const res = await fetch(`${API_BASE}/projects/search?q=${encodeURIComponent(q)}&limit=10`)
+        if (res.ok) {
+          const data = await res.json()
+          setSearchResults(data)
+        } else {
+          setSearchResults([])
+        }
+      } catch (err) {
+        console.error('Project search error:', err)
+        setSearchResults([])
+      } finally {
+        setSearchLoading(false)
+      }
+    }, 250)
+
+    return () => clearTimeout(timeoutId)
+  }, [searchQuery])
+
+  // Click Outside to Dismiss Search Dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
+        setSearchOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  // Handle Search Result Selection
+  const handleSelectProject = (project) => {
+    setFormData({
+      district: project.district || 'Pune',
+      project_type: project.project_type || 'Highway',
+      total_acres: Math.abs(Number(project.total_acres) || 0),
+      land_acquired_pct: Math.min(100, Math.abs(Number(project.land_acquired_pct) || 0)),
+      approval_days_pending: Math.abs(Number(project.approval_days_pending) || 0),
+      compensation_disbursed_pct: Math.min(100, Math.abs(Number(project.compensation_disbursed_pct) || 0)),
+      legal_cases_count: Math.abs(Number(project.legal_cases_count) || 0),
+      ownership_disputes: Math.abs(Number(project.ownership_disputes) || 0),
+      rnp_progress_pct: Math.min(100, Math.abs(Number(project.rnp_progress_pct) || 0)),
+      possession_pct: Math.min(100, Math.abs(Number(project.possession_pct) || 0)),
+      affected_families: Math.abs(Number(project.affected_families) || 0),
+      doc_deficiency_score: Math.abs(Number(project.doc_deficiency_score) || 0),
+      historical_district_delay_avg: Math.abs(Number(project.historical_district_delay_avg) || 0),
+      project_id: project.project_id ? Math.abs(Number(project.project_id)) : undefined,
+      project_name: project.project_name
+    })
+
+    setSelectedProjectMeta({
+      formatted_id: project.formatted_id || `PRJ-2026-${String(project.project_id).padStart(4, '0')}`,
+      project_id: project.project_id ? Math.abs(Number(project.project_id)) : undefined,
+      project_name: project.project_name,
+      district: project.district,
+      project_type: project.project_type,
+      risk_score: project.risk_score !== undefined && project.risk_score !== null ? Math.abs(Number(project.risk_score)) : undefined,
+      risk_category: project.risk_category,
+      source: 'database'
+    })
+
+    setActivePresetKey(null)
+    setSearchQuery('')
+    setSearchResults([])
+    setSearchOpen(false)
+    setPrediction(null)
+    setWhatifResult(null)
+    setInterventionSuccess(false)
+    setError(null)
+  }
+
+  // Keyboard navigation inside search dropdown
+  const handleSearchKeyDown = (e) => {
+    if (!searchOpen || searchResults.length === 0) {
+      if (e.key === 'ArrowDown' || e.key === 'Enter') {
+        setSearchOpen(true)
+      }
+      return
+    }
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setActiveSearchIndex(prev => (prev < searchResults.length - 1 ? prev + 1 : 0))
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setActiveSearchIndex(prev => (prev > 0 ? prev - 1 : searchResults.length - 1))
+    } else if (e.key === 'Enter') {
+      e.preventDefault()
+      if (activeSearchIndex >= 0 && activeSearchIndex < searchResults.length) {
+        handleSelectProject(searchResults[activeSearchIndex])
+      }
+    } else if (e.key === 'Escape') {
+      setSearchOpen(false)
+    }
+  }
+
+  const handleChangeProject = () => {
+    if (searchInputRef.current) {
+      searchInputRef.current.focus()
+    }
+    setSearchOpen(true)
   }
 
   const handlePredict = async (e) => {
@@ -146,22 +311,22 @@ export default function EarlyWarningPredictor() {
     setInterventionSuccess(false)
 
     try {
-      // Send strictly the 13 prediction-time features (plus optional identifier)
+      // Send strictly the 13 prediction-time features using absolute values
       const payload = {
         district: formData.district,
         project_type: formData.project_type,
-        total_acres: parseFloat(formData.total_acres),
-        land_acquired_pct: parseFloat(formData.land_acquired_pct),
-        approval_days_pending: parseInt(formData.approval_days_pending, 10),
-        compensation_disbursed_pct: parseFloat(formData.compensation_disbursed_pct),
-        legal_cases_count: parseInt(formData.legal_cases_count, 10),
-        ownership_disputes: parseInt(formData.ownership_disputes, 10),
-        rnp_progress_pct: parseFloat(formData.rnp_progress_pct),
-        possession_pct: parseFloat(formData.possession_pct),
-        affected_families: parseInt(formData.affected_families, 10),
-        doc_deficiency_score: parseFloat(formData.doc_deficiency_score),
-        historical_district_delay_avg: parseFloat(formData.historical_district_delay_avg),
-        project_id: formData.project_id ? parseInt(formData.project_id, 10) : undefined,
+        total_acres: Math.abs(parseFloat(formData.total_acres) || 0),
+        land_acquired_pct: Math.min(100, Math.abs(parseFloat(formData.land_acquired_pct) || 0)),
+        approval_days_pending: Math.abs(parseInt(formData.approval_days_pending, 10) || 0),
+        compensation_disbursed_pct: Math.min(100, Math.abs(parseFloat(formData.compensation_disbursed_pct) || 0)),
+        legal_cases_count: Math.abs(parseInt(formData.legal_cases_count, 10) || 0),
+        ownership_disputes: Math.abs(parseInt(formData.ownership_disputes, 10) || 0),
+        rnp_progress_pct: Math.min(100, Math.abs(parseFloat(formData.rnp_progress_pct) || 0)),
+        possession_pct: Math.min(100, Math.abs(parseFloat(formData.possession_pct) || 0)),
+        affected_families: Math.abs(parseInt(formData.affected_families, 10) || 0),
+        doc_deficiency_score: Math.abs(parseFloat(formData.doc_deficiency_score) || 0),
+        historical_district_delay_avg: Math.abs(parseFloat(formData.historical_district_delay_avg) || 0),
+        project_id: formData.project_id ? Math.abs(parseInt(formData.project_id, 10)) : undefined,
         project_name: formData.project_name || undefined
       }
 
@@ -181,7 +346,7 @@ export default function EarlyWarningPredictor() {
 
       // Initialize What-If slider with improved compensation
       setWhatifFeature('compensation_disbursed_pct')
-      setWhatifValue(Math.min(100, Math.round(formData.compensation_disbursed_pct + 35)))
+      setWhatifValue(Math.min(100, Math.round(Math.abs(parseFloat(formData.compensation_disbursed_pct) || 0) + 35)))
       setWhatifResult(null)
     } catch (err) {
       setError(err.message)
@@ -198,21 +363,21 @@ export default function EarlyWarningPredictor() {
         project: {
           district: formData.district,
           project_type: formData.project_type,
-          total_acres: parseFloat(formData.total_acres),
-          land_acquired_pct: parseFloat(formData.land_acquired_pct),
-          approval_days_pending: parseInt(formData.approval_days_pending, 10),
-          compensation_disbursed_pct: parseFloat(formData.compensation_disbursed_pct),
-          legal_cases_count: parseInt(formData.legal_cases_count, 10),
-          ownership_disputes: parseInt(formData.ownership_disputes, 10),
-          rnp_progress_pct: parseFloat(formData.rnp_progress_pct),
-          possession_pct: parseFloat(formData.possession_pct),
-          affected_families: parseInt(formData.affected_families, 10),
-          doc_deficiency_score: parseFloat(formData.doc_deficiency_score),
-          historical_district_delay_avg: parseFloat(formData.historical_district_delay_avg),
-          project_id: formData.project_id ? parseInt(formData.project_id, 10) : undefined,
+          total_acres: Math.abs(parseFloat(formData.total_acres) || 0),
+          land_acquired_pct: Math.min(100, Math.abs(parseFloat(formData.land_acquired_pct) || 0)),
+          approval_days_pending: Math.abs(parseInt(formData.approval_days_pending, 10) || 0),
+          compensation_disbursed_pct: Math.min(100, Math.abs(parseFloat(formData.compensation_disbursed_pct) || 0)),
+          legal_cases_count: Math.abs(parseInt(formData.legal_cases_count, 10) || 0),
+          ownership_disputes: Math.abs(parseInt(formData.ownership_disputes, 10) || 0),
+          rnp_progress_pct: Math.min(100, Math.abs(parseFloat(formData.rnp_progress_pct) || 0)),
+          possession_pct: Math.min(100, Math.abs(parseFloat(formData.possession_pct) || 0)),
+          affected_families: Math.abs(parseInt(formData.affected_families, 10) || 0),
+          doc_deficiency_score: Math.abs(parseFloat(formData.doc_deficiency_score) || 0),
+          historical_district_delay_avg: Math.abs(parseFloat(formData.historical_district_delay_avg) || 0),
+          project_id: formData.project_id ? Math.abs(parseInt(formData.project_id, 10)) : undefined,
         },
         feature_to_change: whatifFeature,
-        new_value: parseFloat(whatifValue)
+        new_value: Math.abs(parseFloat(whatifValue) || 0)
       }
 
       const res = await fetch(`${API_BASE}/whatif`, {
@@ -335,7 +500,11 @@ export default function EarlyWarningPredictor() {
               key={key}
               type="button"
               onClick={() => loadPreset(key)}
-              className="text-left p-3 rounded-lg border border-gray-200 bg-gray-50 hover:bg-blue-50 hover:border-blue-300 transition-all text-xs font-medium text-gray-800 flex flex-col justify-between group"
+              className={`text-left p-3 rounded-lg border transition-all text-xs font-medium flex flex-col justify-between group cursor-pointer ${
+                activePresetKey === key
+                  ? 'border-blue-500 bg-blue-50/70 shadow-xs ring-1 ring-blue-400/30'
+                  : 'border-gray-200 bg-gray-50 hover:bg-blue-50/40 hover:border-blue-300'
+              }`}
             >
               <span className="font-semibold text-gray-900 group-hover:text-blue-700">
                 {preset.name.split(' (')[0]}
@@ -346,6 +515,193 @@ export default function EarlyWarningPredictor() {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Search Existing Project Section */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-xs relative" ref={searchContainerRef}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+          <div className="flex items-center gap-2">
+            <Search size={16} className="text-blue-600" />
+            <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
+              Search Existing Project
+            </h2>
+          </div>
+          <span className="text-[11px] font-medium text-gray-500 bg-gray-100 px-2.5 py-0.5 rounded-full">
+            Search by Project ID, District or Project Type
+          </span>
+        </div>
+
+        {/* Search Input Bar */}
+        <div className="relative">
+          <div className="relative flex items-center">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+              <Search size={18} />
+            </div>
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={searchQuery}
+              onChange={e => {
+                setSearchQuery(e.target.value)
+                setSearchOpen(true)
+                setActiveSearchIndex(-1)
+              }}
+              onFocus={() => {
+                if (searchQuery.trim().length > 0 || searchResults.length > 0) {
+                  setSearchOpen(true)
+                }
+              }}
+              onKeyDown={handleSearchKeyDown}
+              placeholder="🔍 Search by Project ID, District or Project Type... (e.g. PRJ-2026-184, Pune, Highway)"
+              className="w-full pl-10 pr-28 py-2.5 bg-gray-50 hover:bg-white focus:bg-white border border-gray-300 focus:border-blue-500 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20 transition-all"
+            />
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center gap-1.5">
+              {searchLoading && (
+                <RefreshCw size={15} className="animate-spin text-blue-600" />
+              )}
+              {searchQuery && !searchLoading && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('')
+                    setSearchResults([])
+                    setSearchOpen(false)
+                  }}
+                  className="text-gray-400 hover:text-gray-600 p-1 rounded-md transition-colors"
+                  title="Clear search"
+                >
+                  <X size={16} />
+                </button>
+              )}
+              <span className="text-[11px] text-gray-400 border-l border-gray-200 pl-2 font-mono">
+                5,000 DB Records
+              </span>
+            </div>
+          </div>
+
+          {/* Dynamic Search Dropdown Panel */}
+          {searchOpen && (searchQuery.trim().length > 0 || searchResults.length > 0 || searchLoading) && (
+            <div className="absolute z-30 left-0 right-0 mt-1.5 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden animate-fadeIn max-h-80 overflow-y-auto">
+              {searchLoading ? (
+                <div className="p-6 text-center text-gray-500 text-xs flex items-center justify-center gap-2">
+                  <RefreshCw size={16} className="animate-spin text-blue-600" />
+                  <span>Searching project registry...</span>
+                </div>
+              ) : searchResults.length > 0 ? (
+                <div className="divide-y divide-gray-100">
+                  <div className="px-4 py-2 bg-gray-50 text-[11px] font-bold text-gray-500 uppercase tracking-wider flex justify-between items-center">
+                    <span>Matching Projects ({searchResults.length})</span>
+                    <span className="text-[10px] lowercase font-normal text-gray-400">Click to auto-fill form parameters</span>
+                  </div>
+                  {searchResults.map((proj, idx) => {
+                    const isSelected = activeSearchIndex === idx
+                    const riskBadgeClass = getRiskBadge(proj.risk_category || 'Low')
+                    return (
+                      <div
+                        key={proj.project_id}
+                        onClick={() => handleSelectProject(proj)}
+                        onMouseEnter={() => setActiveSearchIndex(idx)}
+                        className={`p-3.5 cursor-pointer transition-colors flex items-center justify-between gap-4 ${
+                          isSelected ? 'bg-blue-50/80 border-l-4 border-l-blue-600' : 'hover:bg-gray-50 border-l-4 border-l-transparent'
+                        }`}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                              {proj.formatted_id}
+                            </span>
+                            <h4 className="text-sm font-semibold text-gray-900 truncate">
+                              {proj.project_name}
+                            </h4>
+                          </div>
+                          <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                            <span className="font-medium text-gray-700">{proj.district} • {proj.project_type}</span>
+                            <span>•</span>
+                            <span>{proj.total_acres} Acres</span>
+                            <span>•</span>
+                            <span>{proj.land_acquired_pct}% Acquired</span>
+                            <span>•</span>
+                            <span>{proj.compensation_disbursed_pct}% Disbursed</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 shrink-0">
+                          <div className="text-right">
+                            <span className={`text-[11px] font-bold px-2.5 py-1 rounded-md border ${riskBadgeClass}`}>
+                              {proj.risk_score !== null && proj.risk_score !== undefined
+                                ? `Current Risk: ${proj.risk_category || 'Low'} (${proj.risk_score}%)`
+                                : `Current Risk: ${proj.risk_category || 'Low'}`}
+                            </span>
+                          </div>
+                          <ArrowRight size={15} className={`text-gray-400 ${isSelected ? 'text-blue-600 translate-x-0.5' : ''} transition-all`} />
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="p-6 text-center text-gray-500 space-y-1">
+                  <p className="text-xs font-semibold text-gray-700">No projects found matching "{searchQuery}"</p>
+                  <p className="text-[11px] text-gray-400">
+                    Try searching by ID (e.g. "PRJ-2026-184", "184"), District ("Pune", "Nagpur", "Nashik"), or Sector ("Highway", "Metro").
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Selected Project Indicator */}
+        {selectedProjectMeta && (
+          <div className="mt-4 pt-3.5 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-blue-50/60 rounded-xl p-3.5 border border-blue-100">
+            <div className="flex items-start sm:items-center gap-3">
+              <div className="h-9 w-9 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs font-bold text-xs">
+                {selectedProjectMeta.project_type === 'Highway' ? 'HW' :
+                 selectedProjectMeta.project_type === 'Metro' ? 'MT' :
+                 selectedProjectMeta.project_type === 'Railway' ? 'RL' : 'IR'}
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 bg-blue-100/80 px-1.5 py-0.5 rounded">
+                    Selected Project
+                  </span>
+                  <span className="font-mono text-xs font-bold text-gray-900">
+                    {selectedProjectMeta.formatted_id}
+                  </span>
+                  {selectedProjectMeta.source === 'preset' ? (
+                    <span className="text-[10px] text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200 font-medium">
+                      {selectedProjectMeta.presetLabel}
+                    </span>
+                  ) : selectedProjectMeta.risk_category && (
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${getRiskBadge(selectedProjectMeta.risk_category)}`}>
+                      {selectedProjectMeta.risk_category} Risk Record
+                    </span>
+                  )}
+                </div>
+                <div className="text-xs font-bold text-gray-900 mt-0.5">
+                  {selectedProjectMeta.project_name}
+                  <span className="text-gray-500 font-medium ml-2">
+                    {selectedProjectMeta.district} • {selectedProjectMeta.project_type}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-end sm:self-center">
+              <span className="text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-md font-medium flex items-center gap-1">
+                <CheckCircle2 size={12} className="text-emerald-600" />
+                13 Features Auto-Populated
+              </span>
+              <button
+                type="button"
+                onClick={handleChangeProject}
+                className="text-xs font-bold text-blue-700 bg-white hover:bg-blue-50 border border-blue-200 px-3 py-1 rounded-md transition-colors shadow-xs cursor-pointer"
+              >
+                Change Project
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Parameter Input Form */}
@@ -393,8 +749,8 @@ export default function EarlyWarningPredictor() {
               <label className="block text-xs font-bold text-gray-700 mb-1.5">Total Land Area (Acres)</label>
               <input
                 type="number"
-                step="0.1"
-                min="0.1"
+                step="any"
+                min="0"
                 required
                 value={formData.total_acres}
                 onChange={e => handleInputChange('total_acres', e.target.value)}
@@ -536,6 +892,7 @@ export default function EarlyWarningPredictor() {
                   type="number"
                   min="0"
                   max="100"
+                  step="any"
                   required
                   value={formData.doc_deficiency_score}
                   onChange={e => handleInputChange('doc_deficiency_score', e.target.value)}
@@ -549,6 +906,7 @@ export default function EarlyWarningPredictor() {
                 <input
                   type="number"
                   min="0"
+                  step="any"
                   required
                   value={formData.historical_district_delay_avg}
                   onChange={e => handleInputChange('historical_district_delay_avg', e.target.value)}
