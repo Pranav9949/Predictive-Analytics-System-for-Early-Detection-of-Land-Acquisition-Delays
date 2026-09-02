@@ -50,11 +50,11 @@ class SHAPExplainer:
     """Wraps SHAP TreeExplainer for the delay prediction model."""
 
     def __init__(self):
-        print("🔍 Loading model and SHAP explainer...")
+        print("[INFO] Loading model and SHAP explainer...")
         self.model = joblib.load(MODEL_FILE)
         self.feature_columns = joblib.load(COLUMNS_FILE)
         self.explainer = shap.TreeExplainer(self.model)
-        print("✅ SHAP explainer ready.")
+        print("[OK] SHAP explainer ready.")
 
     def get_shap_drivers(self, input_array: np.ndarray, top_n: int = 3) -> list[dict]:
         """

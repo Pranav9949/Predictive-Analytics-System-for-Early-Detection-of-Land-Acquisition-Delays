@@ -26,7 +26,7 @@ app_state = {}
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("🚀 Loading ML model artifacts for V2 Platform...")
+    print("[INFO] Loading ML model artifacts for V2 Platform...")
     
     model_path = os.path.join(ML_DIR, "delay_model.pkl")
     encoder_path = os.path.join(ML_DIR, "encoder.pkl")
@@ -37,13 +37,13 @@ async def lifespan(app: FastAPI):
         app_state["encoder"] = joblib.load(encoder_path)
         app_state["feature_columns"] = joblib.load(columns_path)
         app_state["shap_explainer"] = SHAPExplainer()
-        print("✅ All ML artifacts loaded successfully.")
+        print("[OK] All ML artifacts loaded successfully.")
     except Exception as e:
-        print(f"⚠️ ML artifact error: {e}")
+        print(f"[WARN] ML artifact error: {e}")
         
     yield
     app_state.clear()
-    print("🧹 Cleaned up ML artifacts.")
+    print("[INFO] Cleaned up ML artifacts.")
 
 app = FastAPI(
     title="Land Acquisition Command Center",
