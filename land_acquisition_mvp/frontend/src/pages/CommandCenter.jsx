@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { API_BASE } from '../App'
+import api from '../services/api'
 import KPICards from '../components/KPICards'
 import AlertFeed from '../components/AlertFeed'
 import { useRole } from '../context/RoleContext'
-import { Shield, Sparkles, Building2, MapPin, Gauge, ArrowRight } from 'lucide-react'
+import { Shield, Sparkles, Building2, Gauge, ArrowRight } from 'lucide-react'
 
 export default function CommandCenter() {
   const { currentRole, roleInfo, token } = useRole()
@@ -15,19 +15,19 @@ export default function CommandCenter() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const authToken = token || localStorage.getItem('auth_token')
-        const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {}
-        
         // Fetch alerts
-        const alertRes = await fetch(`${API_BASE}/alerts/trigger`, { headers })
-        if (alertRes.ok) {
-          setAlerts(await alertRes.json())
+        try {
+          const alertRes = await api.get('/alerts/trigger')
+          setAlerts(alertRes.data || [])
+        } catch (alertErr) {
+          console.error("Failed to fetch alerts", alertErr)
+          setAlerts([])
         }
 
         // Fetch basic stats from geo endpoint for KPIs
-        const geoRes = await fetch(`${API_BASE}/projects/geo`, { headers })
-        if (geoRes.ok) {
-          const geoData = await geoRes.json()
+        try {
+          const geoRes = await api.get('/projects/geo')
+          const geoData = geoRes.data || {}
           const features = geoData.features || []
           const total = features.length
           const critical = features.filter(f => f.properties?.risk_score >= 75).length
@@ -39,6 +39,8 @@ export default function CommandCenter() {
             avgRisk: avgRisk.toFixed(1),
             accuracy: 96.2 // from baseline ML run
           })
+        } catch (geoErr) {
+          console.error("Failed to fetch geo metrics", geoErr)
         }
       } catch (err) {
         console.error("Failed to fetch command center data", err)

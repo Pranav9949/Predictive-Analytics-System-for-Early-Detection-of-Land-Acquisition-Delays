@@ -8,8 +8,6 @@ import Analytics from './pages/Analytics'
 import GISMapPage from './pages/GISMapPage'
 import ModelHealth from './pages/ModelHealth'
 
-export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-
 function App() {
   return (
     <RoleProvider>

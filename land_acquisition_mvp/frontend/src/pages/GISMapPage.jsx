@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { API_BASE } from '../App'
+import api from '../services/api'
 import InterventionModal from '../components/InterventionModal'
 import { useRole } from '../context/RoleContext'
 
@@ -33,12 +33,8 @@ export default function GISMapPage() {
   useEffect(() => {
     const fetchGeoData = async () => {
       try {
-        const authToken = token || localStorage.getItem('auth_token')
-        const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {}
-        const res = await fetch(`${API_BASE}/projects/geo`, { headers })
-        if (res.ok) {
-          setData(await res.json())
-        }
+        const res = await api.get('/projects/geo')
+        setData(res.data)
       } catch (err) {
         console.error("Geo fetch error", err)
       }
@@ -156,12 +152,8 @@ export default function GISMapPage() {
           onClose={() => setSelectedProject(null)}
           onUpdate={async () => {
             try {
-              const authToken = token || localStorage.getItem('auth_token')
-              const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {}
-              const res = await fetch(`${API_BASE}/projects/geo`, { headers })
-              if (res.ok) {
-                setData(await res.json())
-              }
+              const res = await api.get('/projects/geo')
+              setData(res.data)
             } catch (err) {
               console.error(err)
             }

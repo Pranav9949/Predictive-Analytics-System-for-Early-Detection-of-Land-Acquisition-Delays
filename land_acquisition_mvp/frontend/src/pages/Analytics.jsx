@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { API_BASE } from '../App'
+import api from '../services/api'
 import RiskChart from '../components/RiskChart'
 import ProjectTable from '../components/ProjectTable'
 import { useRole } from '../context/RoleContext'
@@ -12,16 +12,12 @@ export default function Analytics() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const authToken = token || localStorage.getItem('auth_token')
-        const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {}
-        
-        const res = await fetch(`${API_BASE}/projects/geo`, { headers })
-        if (res.ok) {
-          const geoData = await res.json()
-          setData((geoData.features || []).map(f => f.properties))
-        }
+        const res = await api.get('/projects/geo')
+        const geoData = res.data || {}
+        setData((geoData.features || []).map(f => f.properties))
       } catch (err) {
         console.error("Failed to fetch analytics data", err)
+        setData([])
       } finally {
         setLoading(false)
       }
