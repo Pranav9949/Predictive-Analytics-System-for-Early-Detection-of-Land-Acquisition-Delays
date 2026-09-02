@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { API_BASE } from '../App'
+import React, { useState, useEffect, useRef } from 'react'
+import api from '../services/api'
 import { useRole } from '../context/RoleContext'
 import {
   AlertTriangle,
@@ -12,17 +12,10 @@ import {
   TrendingDown,
   Send,
   RefreshCw,
-  Scale,
-  DollarSign,
-  Clock,
-  Home,
   ShieldAlert,
   ArrowRight,
   Search,
-  X,
-  Check,
-  RotateCcw,
-  Database
+  X
 } from 'lucide-react'
 
 // Section 8 Pune Highway sample from the official SIH specification
@@ -202,13 +195,10 @@ export default function EarlyWarningPredictor() {
     setSearchLoading(true)
     const timeoutId = setTimeout(async () => {
       try {
-        const res = await fetch(`${API_BASE}/projects/search?q=${encodeURIComponent(q)}&limit=10`)
-        if (res.ok) {
-          const data = await res.json()
-          setSearchResults(data)
-        } else {
-          setSearchResults([])
-        }
+        const res = await api.get('/projects/search', {
+          params: { q, limit: 10 }
+        })
+        setSearchResults(res.data || [])
       } catch (err) {
         console.error('Project search error:', err)
         setSearchResults([])
@@ -330,26 +320,15 @@ export default function EarlyWarningPredictor() {
         project_name: formData.project_name || undefined
       }
 
-      const res = await fetch(`${API_BASE}/predict`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}))
-        throw new Error(errData.detail || `Prediction request failed (${res.status})`)
-      }
-
-      const data = await res.json()
-      setPrediction(data)
+      const res = await api.post('/predict', payload)
+      setPrediction(res.data)
 
       // Initialize What-If slider with improved compensation
       setWhatifFeature('compensation_disbursed_pct')
       setWhatifValue(Math.min(100, Math.round(Math.abs(parseFloat(formData.compensation_disbursed_pct) || 0) + 35)))
       setWhatifResult(null)
     } catch (err) {
-      setError(err.message)
+      setError(err.response?.data?.detail || err.message || 'Prediction request failed')
     } finally {
       setLoading(false)
     }
@@ -380,15 +359,8 @@ export default function EarlyWarningPredictor() {
         new_value: Math.abs(parseFloat(whatifValue) || 0)
       }
 
-      const res = await fetch(`${API_BASE}/whatif`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-
-      if (res.ok) {
-        setWhatifResult(await res.json())
-      }
+      const res = await api.post('/whatif', payload)
+      setWhatifResult(res.data)
     } catch (err) {
       console.error('What-If calculation error:', err)
     } finally {
@@ -403,17 +375,13 @@ export default function EarlyWarningPredictor() {
     setInterventionSubmitting(true)
     try {
       const projId = formData.project_id ? parseInt(formData.project_id, 10) : 101
-      const res = await fetch(`${API_BASE}/projects/status`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          project_id: projId,
-          intervention_taken: interventionText,
-          intervention_date: interventionDate
-        })
+      const res = await api.put('/projects/status', {
+        project_id: projId,
+        intervention_taken: interventionText,
+        intervention_date: interventionDate
       })
 
-      if (res.ok) {
+      if (res.status === 200 || res.data) {
         setInterventionSuccess(true)
       }
     } catch (err) {

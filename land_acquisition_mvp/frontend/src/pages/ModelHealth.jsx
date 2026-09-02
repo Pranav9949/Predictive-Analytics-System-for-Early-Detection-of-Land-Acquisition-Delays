@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { API_BASE } from '../App'
+import api from '../services/api'
 import { useRole } from '../context/RoleContext'
 import {
-  Activity,
   Cpu,
   ArrowRight,
   ShieldCheck,
@@ -11,12 +10,11 @@ import {
   Database,
   BarChart2,
   RefreshCw,
-  SlidersHorizontal,
   Lock
 } from 'lucide-react'
 
 export default function ModelHealth() {
-  const { currentRole, setRole, roleInfo, token } = useRole()
+  const { currentRole, setRole, roleInfo } = useRole()
   const [modelHealth, setModelHealth] = useState(null)
   const [healthLoading, setHealthLoading] = useState(true)
   const [feedback, setFeedback] = useState({ project_id: '', actual_delay_days: '' })
@@ -29,11 +27,8 @@ export default function ModelHealth() {
     const fetchModelHealth = async () => {
       try {
         setHealthLoading(true)
-        const res = await fetch(`${API_BASE}/model/health`)
-        if (res.ok) {
-          const data = await res.json()
-          setModelHealth(data)
-        }
+        const res = await api.get('/model/health')
+        setModelHealth(res.data)
       } catch (err) {
         console.error('Failed to load model health:', err)
       } finally {
@@ -49,27 +44,15 @@ export default function ModelHealth() {
     setLoading(true)
     setResult(null)
     try {
-      const authToken = token || localStorage.getItem('auth_token')
-      const headers = {
-        'Authorization': `Bearer ${authToken}`,
-        'Content-Type': 'application/json'
-      }
-      const res = await fetch(`${API_BASE}/feedback/outcome`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          project_id: parseInt(feedback.project_id),
-          actual_delay_days: parseInt(feedback.actual_delay_days)
-        })
+      const res = await api.post('/feedback/outcome', {
+        project_id: parseInt(feedback.project_id),
+        actual_delay_days: parseInt(feedback.actual_delay_days)
       })
-      if (res.ok) {
-        setResult(await res.json())
-        setFeedback({ project_id: '', actual_delay_days: '' })
-      } else {
-        alert("Failed to submit feedback")
-      }
+      setResult(res.data)
+      setFeedback({ project_id: '', actual_delay_days: '' })
     } catch (err) {
-      console.error(err)
+      console.error('Failed to submit feedback:', err)
+      alert(err.response?.data?.detail || "Failed to submit feedback")
     } finally {
       setLoading(false)
     }

@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import api from '../services/api'
+
 
 export const RoleContext = createContext()
 
@@ -35,8 +37,6 @@ export const ROLES = {
   }
 }
 
-export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-
 export function RoleProvider({ children }) {
   const [currentRole, setCurrentRole] = useState(() => {
     return localStorage.getItem('app_current_role') || 'LAO'
@@ -53,21 +53,16 @@ export function RoleProvider({ children }) {
     // Automatically authenticate/sync token with backend
     const syncAuth = async () => {
       try {
-        const res = await fetch(`${API_BASE}/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: roleConfig.user,
-            password: 'password123'
-          })
+        const res = await api.post('/auth/login', {
+          username: roleConfig.user,
+          password: 'password123'
         })
-        if (res.ok) {
-          const data = await res.json()
-          setToken(data.access_token)
-          localStorage.setItem('auth_token', data.access_token)
+        if (res.data?.access_token) {
+          setToken(res.data.access_token)
+          localStorage.setItem('auth_token', res.data.access_token)
         }
       } catch (err) {
-        console.warn('Backend auto-sync token warning:', err)
+        console.warn('Backend auto-sync token warning:', err.response?.data?.detail || err.message)
       }
     }
 

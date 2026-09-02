@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import api from '../services/api';
 import './DrillDownModal.css';
 
 /**
@@ -33,7 +34,7 @@ const WHATIF_FEATURES = [
   { key: 'doc_deficiency_score', label: 'Doc Deficiency Score', min: 0, max: 1, step: 0.05 },
 ];
 
-function DrillDownModal({ project, onClose, apiBase }) {
+function DrillDownModal({ project, onClose }) {
   // ── State ─────────────────────────────────────────────────
   const [prediction, setPrediction] = useState(null);
   const [predLoading, setPredLoading] = useState(true);
@@ -66,26 +67,19 @@ function DrillDownModal({ project, onClose, apiBase }) {
           historical_district_delay_avg: Math.abs(parseFloat(project.historical_district_delay_avg) || 0),
         };
 
-        const resp = await fetch(`${apiBase}/predict`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
-
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        const data = await resp.json();
-        setPrediction(data);
+        const resp = await api.post('/predict', body);
+        setPrediction(resp.data);
         setPredError(null);
       } catch (err) {
         console.error('Prediction failed:', err);
-        setPredError(err.message);
+        setPredError(err.response?.data?.detail || err.message);
       } finally {
         setPredLoading(false);
       }
     };
 
     fetchPrediction();
-  }, [project, apiBase]);
+  }, [project]);
 
   // ── Handle Feature Select Change ──────────────────────────
   const handleFeatureChange = (featureKey) => {
@@ -119,21 +113,14 @@ function DrillDownModal({ project, onClose, apiBase }) {
         new_value: Math.abs(parseFloat(value) || 0),
       };
 
-      const resp = await fetch(`${apiBase}/whatif`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const data = await resp.json();
-      setWhatifResult(data);
+      const resp = await api.post('/whatif', body);
+      setWhatifResult(resp.data);
     } catch (err) {
       console.error('What-If failed:', err);
     } finally {
       setWhatifLoading(false);
     }
-  }, [project, selectedFeature, apiBase]);
+  }, [project, selectedFeature]);
 
   // Debounced slider change
   useEffect(() => {

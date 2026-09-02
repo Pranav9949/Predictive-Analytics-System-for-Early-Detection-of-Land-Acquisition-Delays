@@ -68,19 +68,19 @@ async def health_check():
 from app.routes.auth import router as auth_router
 from app.routes.ingest import router as ingest_router
 from app.routes.status import router as status_router
+from app.routes.alerts import router as alerts_router
+from app.routes.geo import router as geo_router
 from app.routes.predict import router as predict_router
 from app.routes.whatif import router as whatif_router
 from app.routes.feedback import router as feedback_router
-from app.routes.alerts import router as alerts_router
-from app.routes.geo import router as geo_router
 from app.routes.model_health import router as model_health_router
 
 app.include_router(auth_router, tags=["Auth"])
 app.include_router(ingest_router, tags=["Ingest"])
 app.include_router(status_router, tags=["Intervention Tracker"])
+app.include_router(alerts_router, tags=["Alerts"])
+app.include_router(geo_router, tags=["GIS"])
 app.include_router(predict_router, tags=["Prediction"])
 app.include_router(whatif_router, tags=["Simulator"])
 app.include_router(feedback_router, tags=["Learning Loop"])
-app.include_router(alerts_router, tags=["Alerts"])
-app.include_router(geo_router, tags=["GIS"])
 app.include_router(model_health_router, tags=["Model Governance"])

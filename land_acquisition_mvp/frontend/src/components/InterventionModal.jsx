@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { API_BASE } from '../App'
+import api from '../services/api'
 
 export default function InterventionModal({ project, onClose, onUpdate }) {
   const [prediction, setPrediction] = useState(null)
@@ -10,22 +10,10 @@ export default function InterventionModal({ project, onClose, onUpdate }) {
   useEffect(() => {
     const getPrediction = async () => {
       try {
-        const token = localStorage.getItem('auth_token')
-        const headers = { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-        
-        const res = await fetch(`${API_BASE}/predict`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(project)
-        })
-        if (res.ok) {
-          setPrediction(await res.json())
-        }
+        const res = await api.post('/predict', project)
+        setPrediction(res.data)
       } catch (err) {
-        console.error(err)
+        console.error('Failed to get prediction in modal:', err)
       } finally {
         setLoading(false)
       }
@@ -40,29 +28,20 @@ export default function InterventionModal({ project, onClose, onUpdate }) {
     
     setSubmitting(true)
     try {
-      const token = localStorage.getItem('auth_token')
-      const headers = { 
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-      
-      const res = await fetch(`${API_BASE}/projects/status`, {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify({
-          project_id: project.project_id,
-          intervention_taken: action
-        })
+      const res = await api.put('/projects/status', {
+        project_id: project.project_id,
+        intervention_taken: action
       })
       
-      if (res.ok) {
+      if (res.status === 200 || res.data) {
         if (onUpdate) onUpdate()
         onClose()
       } else {
         alert("Failed to submit intervention.")
       }
     } catch (err) {
-      console.error(err)
+      console.error('Failed to submit intervention:', err)
+      alert(err.response?.data?.detail || "Failed to submit intervention.")
     } finally {
       setSubmitting(false)
     }
