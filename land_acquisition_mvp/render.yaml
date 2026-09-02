@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: land-acquisition-backend
+    runtime: python
+    rootDir: land_acquisition_mvp
+    buildCommand: pip install -r backend/requirements.txt && python ml/generate_data.py && python ml/train_model.py
+    startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"

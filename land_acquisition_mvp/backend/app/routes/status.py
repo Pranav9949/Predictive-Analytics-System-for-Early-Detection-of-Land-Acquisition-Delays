@@ -12,6 +12,8 @@ from app.auth import get_current_user, require_role
 router = APIRouter()
 
 @router.put("/projects/status")
+@router.put("/status/intervene")
+@router.post("/status/intervene")
 async def update_intervention(
     update: InterventionUpdate,
     db: Session = Depends(get_db),

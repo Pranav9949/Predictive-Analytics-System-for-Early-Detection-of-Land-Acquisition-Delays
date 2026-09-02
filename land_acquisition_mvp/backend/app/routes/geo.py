@@ -21,6 +21,7 @@ DISTRICT_COORDS = {
 }
 
 @router.get("/projects/geo")
+@router.get("/geo/projects")
 async def get_projects_geo(db: Session = Depends(get_db)):
     projects = db.query(Project).all()
     
