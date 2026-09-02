@@ -22,7 +22,6 @@ router = APIRouter()
 
 
 @router.post("/whatif", response_model=WhatIfResponse)
-@router.post("/whatif/simulate", response_model=WhatIfResponse)
 async def whatif_simulation(request: WhatIfRequest):
     """
     Evaluates risk impact of modifying one or more project state parameters.

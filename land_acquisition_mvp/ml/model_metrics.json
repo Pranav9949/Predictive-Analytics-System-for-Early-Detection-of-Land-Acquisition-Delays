@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-09-03T00:51:44.188742",
+  "timestamp": "2026-09-02T13:00:40.995944",
   "model_name": "XGBoost Classifier",
   "model_version": "v1.0",
   "prediction_target": "delay_label",
@@ -31,41 +31,41 @@
   "train_size": 4000,
   "test_size": 1000,
   "total_samples": 5000,
-  "accuracy": 0.962,
-  "roc_auc": 0.9923,
-  "precision": 0.9678,
-  "recall": 0.9328,
-  "f1_score": 0.95,
+  "accuracy": 0.965,
+  "roc_auc": 0.9916,
+  "precision": 0.9706,
+  "recall": 0.938,
+  "f1_score": 0.954,
   "confusion_matrix": {
-    "true_negatives": 601,
-    "false_positives": 12,
-    "false_negatives": 26,
-    "true_positives": 361
+    "true_negatives": 602,
+    "false_positives": 11,
+    "false_negatives": 24,
+    "true_positives": 363
   },
   "classification_report": {
     "No Delay": {
-      "precision": 0.9585326953748007,
-      "recall": 0.9804241435562806,
-      "f1-score": 0.9693548387096774,
+      "precision": 0.9616613418530351,
+      "recall": 0.9820554649265906,
+      "f1-score": 0.9717514124293786,
       "support": 613.0
     },
     "Delay": {
-      "precision": 0.967828418230563,
-      "recall": 0.9328165374677002,
-      "f1-score": 0.95,
+      "precision": 0.9705882352941176,
+      "recall": 0.937984496124031,
+      "f1-score": 0.9540078843626807,
       "support": 387.0
     },
-    "accuracy": 0.962,
+    "accuracy": 0.965,
     "macro avg": {
-      "precision": 0.9631805568026819,
-      "recall": 0.9566203405119904,
-      "f1-score": 0.9596774193548387,
+      "precision": 0.9661247885735764,
+      "recall": 0.9600199805253108,
+      "f1-score": 0.9628796483960296,
       "support": 1000.0
     },
     "weighted avg": {
-      "precision": 0.9621301401199808,
-      "recall": 0.962,
-      "f1-score": 0.9618645161290322,
+      "precision": 0.9651160496147341,
+      "recall": 0.965,
+      "f1-score": 0.9648846670675665,
       "support": 1000.0
     }
   },

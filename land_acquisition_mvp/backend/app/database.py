@@ -10,10 +10,7 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.sql import func
 
 # Use SQLite by default for easy demo if DATABASE_URL is missing
-# Stable absolute path to backend/land_acquisition.db avoids duplicate DBs across cwd
-BACKEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-DEFAULT_DB_FILE = os.path.join(BACKEND_DIR, "land_acquisition.db").replace("\\", "/")
-DEFAULT_URL = f"sqlite:///{DEFAULT_DB_FILE}"
+DEFAULT_URL = "sqlite:///./land_acquisition.db"
 DATABASE_URL = os.environ.get("DATABASE_URL", DEFAULT_URL)
 
 engine = create_engine(

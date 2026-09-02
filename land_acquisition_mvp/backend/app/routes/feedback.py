@@ -18,7 +18,6 @@ import continuous_learning
 router = APIRouter()
 
 @router.post("/feedback/outcome")
-@router.post("/feedback/log")
 async def submit_feedback(
     feedback: FeedbackInput,
     db: Session = Depends(get_db),
