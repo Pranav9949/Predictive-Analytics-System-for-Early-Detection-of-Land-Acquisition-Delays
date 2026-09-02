@@ -29,39 +29,56 @@ export default function GISMapPage() {
   const mapInstance = useRef(null)
   const [data, setData] = useState(null)
   const [selectedProject, setSelectedProject] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let isMounted = true
     const fetchGeoData = async () => {
       try {
+        setLoading(true)
         const res = await api.get('/projects/geo')
-        setData(res.data)
+        if (isMounted) {
+          setData(res.data)
+        }
       } catch (err) {
         console.error("Geo fetch error", err)
+      } finally {
+        if (isMounted) setLoading(false)
       }
     }
     fetchGeoData()
+    return () => { isMounted = false }
   }, [token, currentRole])
 
   useEffect(() => {
-    if (!mapInstance.current && mapRef.current) {
-      // Light theme OpenStreetMap tiles
-      mapInstance.current = L.map(mapRef.current).setView([19.7515, 75.7139], 7)
+    if (!mapRef.current) return
+
+    // Initialize Leaflet map if not already created
+    if (!mapInstance.current) {
+      const map = L.map(mapRef.current, {
+        preferCanvas: true
+      }).setView([19.7515, 75.7139], 7)
+
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors'
-      }).addTo(mapInstance.current)
+      }).addTo(map)
+
+      mapInstance.current = map
     }
 
-    if (mapInstance.current && data) {
-      // Clear old layers
-      mapInstance.current.eachLayer((layer) => {
+    const map = mapInstance.current
+
+    if (map && data) {
+      // Clear old GeoJSON layers
+      map.eachLayer((layer) => {
         if (layer instanceof L.GeoJSON) {
-          mapInstance.current.removeLayer(layer)
+          map.removeLayer(layer)
         }
       })
 
       L.geoJSON(data, {
         pointToLayer: (feature, latlng) => {
-          const props = feature.properties
+          const props = feature.properties || {}
           let color = '#10b981' // Green
           if (props.risk_score >= 75) color = '#ef4444' // Red
           else if (props.risk_score >= 50) color = '#f59e0b' // Orange
@@ -69,10 +86,17 @@ export default function GISMapPage() {
           
           if (props.intervention_taken) color = '#3b82f6' // Blue = Intervention taken
 
-          return L.marker(latlng, { icon: getMarkerIcon(color) })
+          return L.circleMarker(latlng, {
+            radius: 7,
+            fillColor: color,
+            color: '#ffffff',
+            weight: 1.5,
+            opacity: 1,
+            fillOpacity: 0.85
+          })
         },
         onEachFeature: (feature, layer) => {
-          const p = feature.properties
+          const p = feature.properties || {}
           
           // Setup popup
           const popupContent = document.createElement('div')
@@ -84,7 +108,7 @@ export default function GISMapPage() {
             <div class="flex justify-between items-center bg-gray-50 p-2 rounded-lg border border-gray-200 mb-2">
               <span class="text-xs font-medium text-gray-600">Predicted Risk:</span>
               <span class="text-sm font-bold ${p.risk_score >= 75 ? 'text-red-600' : p.risk_score >= 50 ? 'text-orange-600' : 'text-emerald-600'}">
-                ${p.risk_score ? p.risk_score.toFixed(1) : 0}%
+                ${p.risk_score ? Number(p.risk_score).toFixed(1) : 0}%
               </span>
             </div>
             
@@ -95,14 +119,14 @@ export default function GISMapPage() {
           `
           
           const btn = document.createElement('button')
-          btn.className = 'w-full bg-blue-600 hover:bg-blue-700 text-white text-xs py-1.5 rounded font-medium mt-1 transition-colors shadow-xs'
+          btn.className = 'w-full bg-blue-600 hover:bg-blue-700 text-white text-xs py-1.5 rounded font-medium mt-1 transition-colors shadow-xs cursor-pointer'
           btn.innerText = currentRole === 'Policy Maker' ? 'Inspect Project Intelligence' : 'Take Administrative Action'
           btn.onclick = () => setSelectedProject(p)
           
           popupContent.appendChild(btn)
           layer.bindPopup(popupContent)
         }
-      }).addTo(mapInstance.current)
+      }).addTo(map)
     }
   }, [data, currentRole])
 

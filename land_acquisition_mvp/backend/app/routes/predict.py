@@ -332,7 +332,7 @@ async def search_projects(
     return results
 
 
-@router.get("/projects/{project_id}", response_model=ProjectSearchResult)
+@router.get("/projects/{project_id:int}", response_model=ProjectSearchResult)
 async def get_project_by_id(
     project_id: int,
     db: Session = Depends(get_db)
